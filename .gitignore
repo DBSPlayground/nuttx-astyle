@@ -1,0 +1,7 @@
+.svn
+build/*/bin
+build/*/obj
+*.orig
+.cproject
+.project
+.settings/*
