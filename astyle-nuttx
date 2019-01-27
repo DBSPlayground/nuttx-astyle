@@ -1,21 +1,19 @@
-style=gnu
+style=gnu-nuttx
 indent=spaces=2
 indent-switches
 indent-cases
 convert-tabs
-# indent-preproc-block
-# indent-preproc-define
+indent-preproc-block
+indent-preproc-define
 # indent-after-parens
 # indent-continuation=1
 min-conditional-indent=0
 max-continuation-indent=60
 pad-oper
 pad-header
-pad-comma
 align-pointer=name
 add-braces
 max-code-length=132
-indent-col1-comments
 formatted
 # break-blocks
 # --delete-empty-lines
