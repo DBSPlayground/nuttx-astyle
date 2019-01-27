@@ -390,11 +390,13 @@ protected:
 	int  getNextProgramCharDistance(const string& line, int i) const;
 	int  indexOf(const vector<const string*>& container, const string* element) const;
 	void setBlockIndent(bool state);
+	void setDefineIndent(bool state);
 	void setBraceIndent(bool state);
 	void setBraceIndentVtk(bool state);
 	string extractPreprocessorStatement(const string& line) const;
 	string trim(const string& str) const;
 	string rtrim(const string& str) const;
+	string ltrim(const string& str) const;
 
 	// variables set by ASFormatter - must be updated in activeBeautifierStack
 	int  inLineNumber;
@@ -520,6 +522,7 @@ private:  // variables
 	bool caseIndent;
 	bool namespaceIndent;
 	bool blockIndent;
+	bool defineIndent;
 	bool braceIndent;
 	bool braceIndentVtk;
 	bool shouldIndentAfterParen;

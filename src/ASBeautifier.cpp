@@ -60,6 +60,7 @@ ASBeautifier::ASBeautifier()
 	setSwitchIndent(false);
 	setCaseIndent(false);
 	setBlockIndent(false);
+	setDefineIndent(false);
 	setBraceIndent(false);
 	setBraceIndentVtk(false);
 	setNamespaceIndent(false);
@@ -632,9 +633,23 @@ string ASBeautifier::beautify(const string& originalLine)
 					indentedLine = preLineWS(preprocBlockIndent, 0) + line;
 					if (preprocBlockIndent == 0)
 						isInIndentablePreprocBlock = false;
-				}
-				else
-					indentedLine = preLineWS(preprocBlockIndent, 0) + line;
+					}
+					else {
+						indentedLine = preLineWS(preprocBlockIndent, 0) + line;
+					}
+					if (defineIndent) {
+						size_t pos = indentedLine.find_first_of('#');
+						size_t wpos = 0;
+						if (pos > 0) {
+							wpos = indentedLine.find_first_not_of(' ', pos+1);
+							if ((wpos-pos-1) == pos) {
+								return originalLine;
+							} else {
+								indentedLine.erase(pos+1,wpos-pos-1);
+							}
+								std::swap(indentedLine[0], indentedLine[pos]);
+						}
+					}
 				return getIndentedLineReturn(indentedLine, originalLine);
 			}
 			if (shouldIndentPreprocConditional && preproc.length() > 0)
@@ -953,6 +968,18 @@ void ASBeautifier::setBraceIndentVtk(bool state)
 	// need to set both of these
 	setBraceIndent(state);
 	braceIndentVtk = state;
+}
+
+/**
+ * set the state of the Preprocesor block indentation option. If true,
+ * The # will be at the left margin and Indenting be indented one additional
+ * indent.
+ *
+ * @param   state             state of option.
+ */
+void ASBeautifier::setDefineIndent(bool state)
+{
+	defineIndent = state;
 }
 
 /**
@@ -1486,6 +1513,22 @@ string ASBeautifier::trim(const string& str) const
 }
 
 /**
+ * ltrim removes the white space from the end of a line.
+ *
+ * @return          the trimmed line.
+ * @param str       the line to trim.
+ */
+string ASBeautifier::ltrim(const string& str) const
+{
+	size_t len = str.length();
+	size_t first = str.find_first_not_of(" \t");
+	if (first == string::npos || first == len - 1)
+		return str;
+	string returnStr(str, first + 1);
+	return returnStr;
+}
+
+/**
  * rtrim removes the white space from the end of a line.
  *
  * @return          the trimmed line.
@@ -1493,13 +1536,13 @@ string ASBeautifier::trim(const string& str) const
  */
 string ASBeautifier::rtrim(const string& str) const
 {
-	size_t len = str.length();
-	size_t end = str.find_last_not_of(" \t");
-	if (end == string::npos
-	        || end == len - 1)
-		return str;
-	string returnStr(str, 0, end + 1);
-	return returnStr;
+  size_t len = str.length();
+  size_t end = str.find_last_not_of(" \t");
+  if (end == string::npos
+          || end == len - 1)
+    return str;
+  string returnStr(str, 0, end + 1);
+  return returnStr;
 }
 
 /**
