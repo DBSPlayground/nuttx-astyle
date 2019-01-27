@@ -3099,6 +3099,10 @@ void ASOptions::parseOption(const string& arg, const string& errorInfo)
 	{
 		formatter.setFormattingStyle(STYLE_GNU);
 	}
+	else if (isOption(arg, "A7n", "style=gnu-nuttx"))
+	{
+		formatter.setFormattingStyle(STYLE_GNU_NUTTX);
+	}
 	else if (isOption(arg, "A8", "style=linux") || isOption(arg, "style=knf"))
 	{
 		formatter.setFormattingStyle(STYLE_LINUX);
