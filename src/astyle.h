@@ -391,6 +391,7 @@ protected:
 	int  indexOf(const vector<const string*>& container, const string* element) const;
 	void setBlockIndent(bool state);
 	void setDefineIndent(bool state);
+	void setDefineCommentIndent(bool state);
 	void setBraceIndent(bool state);
 	void setBraceIndentVtk(bool state);
 	string extractPreprocessorStatement(const string& line) const;
@@ -469,6 +470,7 @@ private:  // variables
 	vector<const string*>* headerStack;
 	vector<vector<const string*>* >* tempStacks;
 	vector<int>* parenDepthStack;
+	vector<int>* commentLocations;
 	vector<bool>* blockStatementStack;
 	vector<bool>* parenStatementStack;
 	vector<bool>* braceBlockStateStack;
@@ -523,6 +525,7 @@ private:  // variables
 	bool namespaceIndent;
 	bool blockIndent;
 	bool defineIndent;
+	bool defineCommentIndent;
 	bool braceIndent;
 	bool braceIndentVtk;
 	bool shouldIndentAfterParen;

@@ -378,17 +378,18 @@ void ASFormatter::fixOptionVariableConflicts()
 		setClassIndent(true);			// avoid hanging indent with access modifiers
 		setSwitchIndent(true);			// avoid hanging indent with case statements
 	}
-  else if (formattingStyle == STYLE_GNU)
-  {
-    setBraceFormatMode(BREAK_MODE);
-    setBlockIndent(true);
-  }
-  else if (formattingStyle == STYLE_GNU_NUTTX)
-  {
-    setBraceFormatMode(BREAK_MODE);
-    setBlockIndent(true);
-    setDefineIndent(true);
-  }
+	else if (formattingStyle == STYLE_GNU)
+	{
+		setBraceFormatMode(BREAK_MODE);
+		setBlockIndent(true);
+	}
+	else if (formattingStyle == STYLE_GNU_NUTTX)
+	{
+		setBraceFormatMode(BREAK_MODE);
+		setBlockIndent(true);
+		setDefineIndent(true);
+		setDefineCommentIndent(true);
+	}
 	else if (formattingStyle == STYLE_LINUX)
 	{
 		setBraceFormatMode(LINUX_MODE);

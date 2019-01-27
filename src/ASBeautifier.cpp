@@ -32,6 +32,7 @@ static int g_preprocessorCppExternCBrace;
 ASBeautifier::ASBeautifier()
 {
 	waitingBeautifierStack = nullptr;
+	commentLocations = nullptr;
 	activeBeautifierStack = nullptr;
 	waitingBeautifierStackLengthStack = nullptr;
 	activeBeautifierStackLengthStack = nullptr;
@@ -61,6 +62,7 @@ ASBeautifier::ASBeautifier()
 	setCaseIndent(false);
 	setBlockIndent(false);
 	setDefineIndent(false);
+	setDefineCommentIndent(false);
 	setBraceIndent(false);
 	setBraceIndentVtk(false);
 	setNamespaceIndent(false);
@@ -262,6 +264,9 @@ ASBeautifier::ASBeautifier(const ASBeautifier& other) : ASBase(other)
 	currentNonSpaceCh = other.currentNonSpaceCh;
 	currentNonLegalCh = other.currentNonLegalCh;
 	prevNonLegalCh = other.prevNonLegalCh;
+	commentLocations = other.commentLocations;
+	defineCommentIndent = other.defineCommentIndent;
+	defineIndent = other.defineIndent;
 }
 
 /**
@@ -302,7 +307,7 @@ void ASBeautifier::init(ASSourceIterator* iter)
 	initVectors();
 	ASBase::init(getFileType());
 	g_preprocessorCppExternCBrace = 0;
-
+	initContainer(commentLocations, new vector<int>);
 	initContainer(waitingBeautifierStack, new vector<ASBeautifier*>);
 	initContainer(activeBeautifierStack, new vector<ASBeautifier*>);
 
@@ -798,7 +803,13 @@ string ASBeautifier::beautify(const string& originalLine)
 		indentCount = spaceIndentCount = 0;
 
 	// finally, insert indentations into beginning of line
-
+	if (defineCommentIndent && lineIsCommentOnly && commentLocations->size()) {
+			size_t comment = line.find("/* Bit");
+			if (comment != string::npos) {
+					std::vector<int>::iterator result = std::min_element(commentLocations->begin(), commentLocations->end());
+					spaceIndentCount = *result ;
+			}
+	}
 	string indentedLine = preLineWS(indentCount, spaceIndentCount) + line;
 	indentedLine = getIndentedLineReturn(indentedLine, originalLine);
 
@@ -980,6 +991,18 @@ void ASBeautifier::setBraceIndentVtk(bool state)
 void ASBeautifier::setDefineIndent(bool state)
 {
 	defineIndent = state;
+}
+
+/**
+ * set the state of the Preprocesor block indentation option. If true,
+ * The # will be at the left margin and Indenting be indented one additional
+ * indent.
+ *
+ * @param   state             state of option.
+ */
+void ASBeautifier::setDefineCommentIndent(bool state)
+{
+  defineCommentIndent = state;
 }
 
 /**
@@ -2057,6 +2080,15 @@ void ASBeautifier::processPreprocessor(const string& preproc, const string& line
 				beautifier = activeBeautifierStack->back();
 				activeBeautifierStack->pop_back();
 				delete beautifier;
+			}
+		}
+	}
+	else if (defineCommentIndent && preproc == "define") {
+		size_t end_comment = line.find_last_of("*/");
+		size_t comment = line.find("/* Bit");
+		if (comment != 0 && comment!= string::npos && end_comment != string::npos) {
+			if (std::find(commentLocations->begin(), commentLocations->end(),comment) == commentLocations->end()) {
+				commentLocations->push_back(comment);
 			}
 		}
 	}
