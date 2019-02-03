@@ -20,6 +20,45 @@ namespace astyle {
 // this must be global
 static int g_preprocessorCppExternCBrace;
 
+ASDefine::ASDefine() :
+    lineNumber(0)
+    {
+
+    }
+ASDefine::ASDefine(const string& line, int lineNumber) :
+    lineNumber(lineNumber)
+{
+  string copy = line;
+  size_t commentpos = copy.find("/*");
+
+  char *token = std::strtok((char *)copy.c_str(), " ");
+
+  if (token != NULL) {
+      defineCol = pair<int,string>(copy.find(token),token);
+      token = strtok(NULL, " ");
+      if (token != NULL && std::strcmp("define",token) == 0){
+          defineCol.second.append(token);
+          token = strtok(NULL, " ");
+      }
+  }
+  if (token != NULL) {
+      symbolCol = pair<int,string>(copy.find(token),token);
+      token = strtok(NULL, " ");
+  }
+  if (token != NULL) {
+      valueCol = pair<int,string>(copy.find(token),token);
+      token = strtok(NULL, " ");
+      while (token != NULL && std::strcmp("/*",token)){
+          valueCol.second.append(" ");
+          valueCol.second.append(token);
+          token = strtok(NULL, " ");
+      }
+  }
+  if (commentpos != string::npos) {
+      comentCol = pair<int,string>(commentpos,line.substr(commentpos));
+  }
+}
+
 //-----------------------------------------------------------------------------
 // ASBeautifier class
 //-----------------------------------------------------------------------------
@@ -33,6 +72,7 @@ ASBeautifier::ASBeautifier()
 {
 	waitingBeautifierStack = nullptr;
 	commentLocations = nullptr;
+	lastDefine = nullptr;
 	activeBeautifierStack = nullptr;
 	waitingBeautifierStackLengthStack = nullptr;
 	activeBeautifierStackLengthStack = nullptr;
@@ -56,6 +96,8 @@ ASBeautifier::ASBeautifier()
 	setMaxContinuationIndentLength(40);
 	classInitializerIndents = 1;
 	tabLength = 0;
+	currentLineNumber = 0;
+	maxSpacePadNum = 0;
 	setClassIndent(false);
 	setModifierIndent(false);
 	setSwitchIndent(false);
@@ -149,6 +191,8 @@ ASBeautifier::ASBeautifier(const ASBeautifier& other) : ASBase(other)
 	// variables set by ASFormatter
 	// must also be updated in activeBeautifierStack
 	inLineNumber = other.inLineNumber;
+	currentLineNumber = other.currentLineNumber;
+	maxSpacePadNum = other.maxSpacePadNum;
 	runInIndentContinuation = other.runInIndentContinuation;
 	nonInStatementBrace = other.nonInStatementBrace;
 	objCColonAlignSubsequent = other.objCColonAlignSubsequent;
@@ -208,6 +252,7 @@ ASBeautifier::ASBeautifier(const ASBeautifier& other) : ASBase(other)
 	switchIndent = other.switchIndent;
 	caseIndent = other.caseIndent;
 	indentedCommentPos = other.indentedCommentPos;
+	defaultDefineCommentPos= other.defaultDefineCommentPos;
 	namespaceIndent = other.namespaceIndent;
 	braceIndent = other.braceIndent;
 	braceIndentVtk = other.braceIndentVtk;
@@ -268,6 +313,7 @@ ASBeautifier::ASBeautifier(const ASBeautifier& other) : ASBase(other)
 	commentLocations = other.commentLocations;
 	defineCommentIndent = other.defineCommentIndent;
 	defineIndent = other.defineIndent;
+	lastDefine = other.lastDefine;
 }
 
 /**
@@ -308,7 +354,8 @@ void ASBeautifier::init(ASSourceIterator* iter)
 	initVectors();
 	ASBase::init(getFileType());
 	g_preprocessorCppExternCBrace = 0;
-	initContainer(commentLocations, new vector<int>);
+	initContainer(commentLocations, new vector<pair<int, string> >);
+	initContainer(lastDefine, new vector<ASDefine>);
 	initContainer(waitingBeautifierStack, new vector<ASBeautifier*>);
 	initContainer(activeBeautifierStack, new vector<ASBeautifier*>);
 
@@ -418,6 +465,8 @@ void ASBeautifier::init(ASSourceIterator* iter)
 	isInIndentableStruct = false;
 	isInIndentablePreproc = false;
 	inLineNumber = 0;
+	currentLineNumber = 0;
+	maxSpacePadNum = 0;
 	runInIndentContinuation = 0;
 	nonInStatementBrace = 0;
 	objCColonAlignSubsequent = 0;
@@ -472,6 +521,7 @@ void ASBeautifier::checkIndetedComment(const string& originalLine, const string&
 string ASBeautifier::beautify(const string& originalLine, const string& inputLine)
 {
 	string line;
+	currentLineNumber++;
 	checkIndetedComment(originalLine, inputLine);
 	bool isInQuoteContinuation = isInVerbatimQuote || haveLineContinuationChar;
 	currentHeader = nullptr;
@@ -551,6 +601,7 @@ string ASBeautifier::beautify(const string& originalLine, const string& inputLin
 			{
 				if (line.find("*/", 2) != string::npos)
 					lineIsCommentOnly = true;
+		      commentLocations->push_back(pair<int,string>(inputLine.find(originalLine), line.c_str()));
 			}
 		}
 
@@ -617,6 +668,12 @@ string ASBeautifier::beautify(const string& originalLine, const string& inputLin
 			indentedLine = preLineWS(prevFinalLineIndentCount, prevFinalLineSpaceIndentCount) + line;
 			return getIndentedLineReturn(indentedLine, originalLine);
 		}
+		if (defineIndent) {
+		    if (originalLine.find("defined") != string::npos) {
+		        return inputLine;
+		    }
+		    return originalLine;
+		}
 		indentedLine = preLineWS(preprocBlockIndent, 0) + line;
 		return getIndentedLineReturn(indentedLine, originalLine);
 	}
@@ -654,17 +711,48 @@ string ASBeautifier::beautify(const string& originalLine, const string& inputLin
 					else {
 						indentedLine = preLineWS(preprocBlockIndent, 0) + line;
 					}
+				  // Handle Nuttx Style post # indenting
 					if (defineIndent) {
 						size_t pos = indentedLine.find_first_of('#');
 						size_t wpos = 0;
+						// Not at margin
 						if (pos > 0) {
 							wpos = indentedLine.find_first_not_of(' ', pos+1);
+							// Already indented
 							if ((wpos-pos-1) == pos) {
 								return originalLine;
 							} else {
+							  // removed prefix added
 								indentedLine.erase(pos+1,wpos-pos-1);
 							}
-								std::swap(indentedLine[0], indentedLine[pos]);
+							// Move the # to pos 0 and space to were it was
+							std::swap(indentedLine[0], indentedLine[pos]);
+							// Now adjust for Line change effecting Value and posibly comment
+							size_t added = indentedLine.length() - originalLine.length();
+							if (added > 0) {
+							    wpos = indentedLine.find("define");
+							    if (wpos != string::npos) {
+		                  // Line is bigger and is a define
+							        ASDefine define(indentedLine,0);
+							        // end of symbol
+							        size_t bpos = define.symbolCol.first + define.symbolCol.second.length();
+                      // beginning of value
+							        size_t epos = indentedLine.find_first_not_of(' ', bpos);
+							        // Can we take space from there?
+							        if (epos - bpos >= added) {
+
+					                indentedLine.erase(bpos,added);
+							        } else if (define.comentCol.first != 0) {
+							            // Have a comment and could not get it from the Symbol to Value spacing
+							            // Try to take if from the Value to Comment Spacing
+		                      bpos = define.valueCol.first + define.valueCol.second.length();
+		                      epos = indentedLine.find_first_not_of(' ', bpos);
+		                      if (epos - bpos >= added) {
+		                          indentedLine.erase(bpos,added);
+		                      }
+							        }
+							    }
+              }
 						}
 					}
 				return getIndentedLineReturn(indentedLine, originalLine);
@@ -753,7 +841,8 @@ string ASBeautifier::beautify(const string& originalLine, const string& inputLin
 		activeBeautifierStack->back()->isInExternC = isInExternC;
 		activeBeautifierStack->back()->isInBeautifySQL = isInBeautifySQL;
 		activeBeautifierStack->back()->isInIndentableStruct = isInIndentableStruct;
-		activeBeautifierStack->back()->isInIndentablePreproc = isInIndentablePreproc;
+    activeBeautifierStack->back()->isInIndentablePreproc = isInIndentablePreproc;
+    activeBeautifierStack->back()->maxSpacePadNum = maxSpacePadNum;
 		// must return originalLine not the trimmed line
 		return activeBeautifierStack->back()->beautify(originalLine, originalLine);
 	}
@@ -775,6 +864,21 @@ string ASBeautifier::beautify(const string& originalLine, const string& inputLin
 	// parse characters in the current line.
 	parseCurrentLine(line);
 
+	if (originalLine.length() == inputLine.length()) {
+    size_t cpos = line.find_last_of(";");
+    if (cpos != string::npos) {
+        size_t pos = line.find("/*");
+        if (pos != string::npos) {
+          size_t desired = maxSpacePadNum + 4; //todo:nuttx comment indent
+          if (pos < desired) {
+              line.insert(pos, desired - pos, ' ');
+          }
+          if (pos > desired) {
+              line.erase(cpos+1, pos - desired);
+          }
+        }
+    }
+	}
 	// handle special cases of indentation
 	adjustParsedLineIndentation(iPrelim, isInExtraHeaderIndent);
 
@@ -816,10 +920,105 @@ string ASBeautifier::beautify(const string& originalLine, const string& inputLin
 
 	// finally, insert indentations into beginning of line
 	if (defineCommentIndent && lineIsCommentOnly && indentedCommentPos != string::npos && commentLocations->size()) {
-			std::vector<int>::iterator result = std::find(commentLocations->begin(), commentLocations->end(), indentedCommentPos);
-			if (result != commentLocations->end()) {
-				spaceIndentCount = *result ;
+      ASDefine comment(inputLine, 0);
+	    bool found = false;
+	    if (!found) {
+          // For
+          // #define IMXRT_ITCM_BASE           0x00000000  /* 512KB ITCM */
+          //                                /* 0x00080000     512KB ITCM Reserved */
+          size_t pos = inputLine.find(originalLine);
+          if (pos != string::npos && lastDefine->size() > 0) {
+              ASDefine define = lastDefine->back();
+              if (pos < define.valueCol.first && isdigit(comment.symbolCol.second[0])) {
+                  if (comment.defineCol.second == "/*") {
+                      string lc = LCSubStr(comment.symbolCol.second,  define.valueCol.second);
+                      if (lc.length() >=3) {
+                          spaceIndentCount = define.valueCol.first - 3;
+                          cout << currentLineNumber << " " << "indeted comment alined " << spaceIndentCount << " from Line:" << define.lineNumber << " " << define.comentCol.second << endl;
+                          found =- true;
+                      }
+                  }
+              }
+          }
+
+	    }
+	    if (!found) {
+          // Indented with previous comment like this on
+          // #define LPSPI_PARAM_PCSNUM_SHIFT       (16)      /* Bits 16-23: PCS Number */
+          // #define LPSPI_PARAM_PCSNUM_MASK        (0xff << LPSPI_PARAM_PCSNUM_SHIFT)
+          //                                                 /* Bits 24-31: Reserved */
+
+        // Look back to find one it matches
+        std::vector<ASDefine>::reverse_iterator rit = lastDefine->rbegin();
+         for (; rit!= lastDefine->rend(); ++rit) {
+             ASDefine define = *rit;
+
+             // Establish  a non zero default
+             if (define.comentCol.first != 0  && defaultDefineCommentPos != define.comentCol.first) {
+                 defaultDefineCommentPos = define.comentCol.first;
+             }
+
+             // is this comment similar to a last one and the same offset into the line
+
+             string lc = LCSubStr(comment.symbolCol.second,  define.comentCol.second);
+             if (lc.length() >= 3) {
+                 // offset on trimed line
+                 size_t lccp = originalLine.find(lc);
+                 size_t lcdp = define.comentCol.second.find(lc);
+                 if (lcdp == lccp) {
+                     spaceIndentCount = define.comentCol.first;
+                     found =- true;
+                     cout << currentLineNumber << " " << "bit alined " << spaceIndentCount << " from Line:" << define.lineNumber << " " << define.comentCol.second << endl;
+                     break;
+                 }
+             }
+         }
+	    }
+	    if (!found)
+	      {
+	        // 0 based to 1 based
+	        defaultDefineCommentPos++;
+	       if (commentLocations->size() == 1) {
+	           spaceIndentCount = defaultDefineCommentPos;
+             cout << "default comment aligned " << defaultDefineCommentPos << endl;
+             indentCount = 0;
+             found = true;
+	       } else {
+            std::vector<pair<int, string> >::reverse_iterator rit = commentLocations->rbegin();
+            ++rit; // Skip this one
+            for (; rit!= commentLocations->rend(); ++rit) {
+               pair<int, string> prev_comment = *rit;
+               string lc = LCSubStr(comment.symbolCol.second,  prev_comment.second);
+               if (lc.length() >= 3) {
+                 size_t lccp = originalLine.find(lc);
+                 size_t lcdp = prev_comment.second.find(lc);
+                 if (lcdp == lccp) {
+                    indentCount = 0;
+                    spaceIndentCount = prev_comment.first;
+                    if (spaceIndentCount == 0) {
+                        cout << currentLineNumber << " " << " 0 detected comment alined " << endl;
+                        indentCount = prevFinalLineIndentCount;
+                        spaceIndentCount = 0;
+                        cout << currentLineNumber << " " << "comment alined " << spaceIndentCount << " " << prev_comment.second << endl;
+                        found = true;
+                        commentLocations->back().first = indentCount  * indentString.length();
+                    } else {
+                        cout << currentLineNumber << " " << "comment alined " << spaceIndentCount << " " << prev_comment.second << endl;
+                        found = true;
+                        commentLocations->back().first = spaceIndentCount;
+                    }
+                    break;
+                 }
+               }
+            }
+	       }
 			}
+      if (!found)
+        {
+             spaceIndentCount = defaultDefineCommentPos;
+             cout << currentLineNumber << " " << "not found default comment aligned " << spaceIndentCount << endl;
+             indentCount = 0;
+        }
 	}
 	string indentedLine = preLineWS(indentCount, spaceIndentCount) + line;
 	indentedLine = getIndentedLineReturn(indentedLine, originalLine);
@@ -1521,6 +1720,62 @@ int ASBeautifier::convertTabToSpaces(int i, int tabIncrementIn) const
 	return tabToSpacesAdjustment;
 }
 
+string ASBeautifier::LCSubStr(string X, string Y)
+{
+    // Find length of both the strings.
+    int m = X.length();
+    int n = Y.length();
+
+    // Variable to store length of longest
+    // common substring.
+    int result = 0;
+
+    // Variable to store ending point of
+    // longest common substring in X.
+    int end;
+
+    // Matrix to store result of two
+    // consecutive rows at a time.
+    int len[2][n];
+
+    // Variable to represent which row of
+    // matrix is current row.
+    int currRow = 0;
+
+    // For a particular value of i and j,
+    // len[currRow][j] stores length of longest
+    // common substring in string X[0..i] and Y[0..j].
+    for (int i = 0; i <= m; i++) {
+        for (int j = 0; j <= n; j++) {
+            if (i == 0 || j == 0) {
+                len[currRow][j] = 0;
+            }
+            else if (X[i - 1] == Y[j - 1]) {
+                len[currRow][j] = len[1 - currRow][j - 1] + 1;
+                if (len[currRow][j] > result) {
+                    result = len[currRow][j];
+                    end = i - 1;
+                }
+            }
+            else {
+                len[currRow][j] = 0;
+            }
+        }
+
+        // Make current row as previous row and
+        // previous row as new current row.
+        currRow = 1 - currRow;
+    }
+
+    // If there is no common substring, print -1.
+    if (result == 0) {
+        return "";
+    }
+
+    // Longest common substring is from index
+    // end - result + 1 to index end in X.
+    return X.substr(end - result + 1, result);
+}
 /**
  * trim removes the white space surrounding a line.
  *
@@ -2095,14 +2350,8 @@ void ASBeautifier::processPreprocessor(const string& preproc, const string& line
 		}
 	}
 	else if (defineCommentIndent && preproc == "define") {
-		size_t end_comment = line.find_last_of("*/");
-		size_t comment = line.find("/*");
-		if (comment != 0 && comment!= string::npos && end_comment != string::npos) {
-			if (std::find(commentLocations->begin(), commentLocations->end(),comment) == commentLocations->end()) {
-				commentLocations->push_back(comment);
-			}
+	    lastDefine->push_back(ASDefine(line, currentLineNumber));
 		}
-	}
 }
 
 // Compute the preliminary indentation based on data in the headerStack
@@ -2736,6 +2985,15 @@ void ASBeautifier::parseCurrentLine(const string& line)
 		}
 		if (!(isInComment || isInLineComment) && line.compare(i, 2, "/*") == 0)
 		{
+	      size_t cpos = line.find("/*");
+	      if (cpos > 0) {
+          size_t epos = line.find_last_not_of(" \t", cpos-1);
+          if (epos != string::npos) {
+              if (line[epos] == ';') {
+                  maxSpacePadNum = std::max(maxSpacePadNum, epos);
+              }
+          }
+	      }
 			// if there is a 'case' statement after these comments unindent by 1
 			if (isCaseHeaderCommentIndent && lineOpensWithComment)
 				--indentCount;

@@ -695,6 +695,7 @@ string ASFormatter::nextLine()
 				}
 			}
 			if (isIndentableProprocessorBlock
+			        && formattingStyle != STYLE_GNU_NUTTX
 			        && charNum < (int) currentLine.length() - 1
 			        && isWhiteSpace(currentLine[charNum + 1]))
 			{

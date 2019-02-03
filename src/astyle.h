@@ -329,6 +329,18 @@ protected:  // functions definitions are at the end of ASResource.cpp
 //-----------------------------------------------------------------------------
 // Class ASBeautifier
 //-----------------------------------------------------------------------------
+class ASDefine
+{
+public:
+  ASDefine();
+  ASDefine(const string& line, int lineNumber);
+  pair<size_t,string>  defineCol;
+  pair<size_t,string>  symbolCol;
+  pair<size_t,string>  valueCol;
+  pair<size_t,string>  comentCol;
+  int lineNumber;
+};
+
 
 class ASBeautifier : protected ASBase
 {
@@ -399,7 +411,7 @@ protected:
 	string trim(const string& str) const;
 	string rtrim(const string& str) const;
 	string ltrim(const string& str) const;
-
+  string LCSubStr(string X, string Y);
 	// variables set by ASFormatter - must be updated in activeBeautifierStack
 	int  inLineNumber;
 	int  runInIndentContinuation;
@@ -415,6 +427,9 @@ protected:
 	bool isInBeautifySQL;
 	bool isInIndentableStruct;
 	bool isInIndentablePreproc;
+	int  currentLineNumber;
+  size_t  maxSpacePadNum;
+
 
 private:  // functions
 	void adjustObjCMethodDefinitionIndentation(const string& line_);
@@ -471,7 +486,8 @@ private:  // variables
 	vector<const string*>* headerStack;
 	vector<vector<const string*>* >* tempStacks;
 	vector<int>* parenDepthStack;
-	vector<int>* commentLocations;
+	vector<pair<int,string> >* commentLocations;
+	vector<ASDefine>* lastDefine;
 	vector<bool>* blockStatementStack;
 	vector<bool>* parenStatementStack;
 	vector<bool>* braceBlockStateStack;
@@ -489,6 +505,7 @@ private:  // variables
 	string verbatimDelimiter;
 	bool isInQuote;
   size_t indentedCommentPos;
+  size_t defaultDefineCommentPos;
 	bool isInVerbatimQuote;
 	bool haveLineContinuationChar;
 	bool isInAsm;
@@ -871,6 +888,7 @@ private:  // variables
 	vector<bool>* questionMarkStack;
 
   string inputLine;
+  string rawinputLine;
   string currentLine;
 	string formattedLine;
 	string readyFormattedLine;
@@ -887,7 +905,7 @@ private:  // variables
 	int  nextLineSpacePadNum;
 	int  objCColonAlign;
 	int  preprocBraceTypeStackSize;
-	int  spacePadNum;
+  int  spacePadNum;
 	int  tabIncrementIn;
 	int  templateDepth;
 	int  squareBracketCount;
