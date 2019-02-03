@@ -169,7 +169,8 @@ void ASFormatter::init(ASSourceIterator* si)
 	clearFormattedLineSplitPoints();
 
 	currentHeader = nullptr;
-	currentLine = "";
+  currentLine = "";
+  inputLine = "";
 	readyFormattedLine = "";
 	formattedLine = "";
 	verbatimDelimiter = "";
@@ -481,6 +482,8 @@ string ASFormatter::nextLine()
 	isCharImmediatelyPostOpenBlock = false;
 	isCharImmediatelyPostCloseBlock = false;
 	isCharImmediatelyPostTemplate = false;
+
+	inputLine = currentLine;
 
 	while (!isLineReady)
 	{
@@ -1901,7 +1904,7 @@ string ASFormatter::nextLine()
 	        && previousReadyFormattedLineLength > 0)
 	{
 		isLineReady = true;		// signal a waiting readyFormattedLine
-		beautifiedLine = beautify("");
+		beautifiedLine = beautify("","");
 		previousReadyFormattedLineLength = 0;
 		// call the enhancer for new empty lines
 		enhancer->enhance(beautifiedLine, isInNamespace, isInPreprocessorBeautify, isInBeautifySQL);
@@ -1910,7 +1913,7 @@ string ASFormatter::nextLine()
 	{
 		isLineReady = false;
 		runInIndentContinuation = runInIndentChars;
-		beautifiedLine = beautify(readyFormattedLine);
+		beautifiedLine = beautify(readyFormattedLine, inputLine);
 		previousReadyFormattedLineLength = readyFormattedLineLength;
 		// the enhancer is not called for no-indent line comments
 		if (!lineCommentNoBeautify && !isFormattingModeOff)

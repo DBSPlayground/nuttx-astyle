@@ -341,7 +341,8 @@ public:
 	ASBeautifier& operator=(ASBeautifier&&)      = delete;
 	virtual void init(ASSourceIterator* iter);
 
-	virtual string beautify(const string& originalLine);
+	virtual string beautify(const string& originalLine, const string& inputLine);
+	void checkIndetedComment(const string& originalLine, const string& inputLine);
 	void setCaseIndent(bool state);
 	void setClassIndent(bool state);
 	void setContinuationIndentation(int indent = 1);
@@ -487,6 +488,7 @@ private:  // variables
 	string indentString;
 	string verbatimDelimiter;
 	bool isInQuote;
+  size_t indentedCommentPos;
 	bool isInVerbatimQuote;
 	bool haveLineContinuationChar;
 	bool isInAsm;
@@ -868,7 +870,8 @@ private:  // variables
 	vector<bool>* structStack;
 	vector<bool>* questionMarkStack;
 
-	string currentLine;
+  string inputLine;
+  string currentLine;
 	string formattedLine;
 	string readyFormattedLine;
 	string verbatimDelimiter;

@@ -207,6 +207,7 @@ ASBeautifier::ASBeautifier(const ASBeautifier& other) : ASBase(other)
 	modifierIndent = other.modifierIndent;
 	switchIndent = other.switchIndent;
 	caseIndent = other.caseIndent;
+	indentedCommentPos = other.indentedCommentPos;
 	namespaceIndent = other.namespaceIndent;
 	braceIndent = other.braceIndent;
 	braceIndentVtk = other.braceIndentVtk;
@@ -449,6 +450,17 @@ void ASBeautifier::initVectors()
 	ASResource::buildIndentableHeaders(indentableHeaders);
 }
 
+void ASBeautifier::checkIndetedComment(const string& originalLine, const string& inputLine)
+{
+  indentedCommentPos = string::npos;
+  if (inputLine.length() > 0 && inputLine[0] == ' ' && (inputLine.length() != originalLine.length()))
+    {
+      size_t comment = inputLine.find("/*");
+      if (comment != string::npos) {
+          indentedCommentPos = comment;
+      }
+    }
+}
 /**
  * beautify a line of source code.
  * every line of source code in a source code file should be sent
@@ -457,11 +469,11 @@ void ASBeautifier::initVectors()
  * @return      the indented line.
  * @param originalLine       the original unindented line.
  */
-string ASBeautifier::beautify(const string& originalLine)
+string ASBeautifier::beautify(const string& originalLine, const string& inputLine)
 {
 	string line;
+	checkIndetedComment(originalLine, inputLine);
 	bool isInQuoteContinuation = isInVerbatimQuote || haveLineContinuationChar;
-
 	currentHeader = nullptr;
 	lastLineHeader = nullptr;
 	blockCommentNoBeautify = blockCommentNoIndent;
@@ -713,7 +725,7 @@ string ASBeautifier::beautify(const string& originalLine)
 			ASBeautifier* defineBeautifier = activeBeautifierStack->back();
 			activeBeautifierStack->pop_back();
 
-			string indentedLine = defineBeautifier->beautify(line);
+			string indentedLine = defineBeautifier->beautify(line, line);
 			delete defineBeautifier;
 			return getIndentedLineReturn(indentedLine, originalLine);
 		}
@@ -743,7 +755,7 @@ string ASBeautifier::beautify(const string& originalLine)
 		activeBeautifierStack->back()->isInIndentableStruct = isInIndentableStruct;
 		activeBeautifierStack->back()->isInIndentablePreproc = isInIndentablePreproc;
 		// must return originalLine not the trimmed line
-		return activeBeautifierStack->back()->beautify(originalLine);
+		return activeBeautifierStack->back()->beautify(originalLine, originalLine);
 	}
 
 	// Flag an indented header in case this line is a one-line block.
@@ -803,11 +815,10 @@ string ASBeautifier::beautify(const string& originalLine)
 		indentCount = spaceIndentCount = 0;
 
 	// finally, insert indentations into beginning of line
-	if (defineCommentIndent && lineIsCommentOnly && commentLocations->size()) {
-			size_t comment = line.find("/* Bit");
-			if (comment != string::npos) {
-					std::vector<int>::iterator result = std::min_element(commentLocations->begin(), commentLocations->end());
-					spaceIndentCount = *result ;
+	if (defineCommentIndent && lineIsCommentOnly && indentedCommentPos != string::npos && commentLocations->size()) {
+			std::vector<int>::iterator result = std::find(commentLocations->begin(), commentLocations->end(), indentedCommentPos);
+			if (result != commentLocations->end()) {
+				spaceIndentCount = *result ;
 			}
 	}
 	string indentedLine = preLineWS(indentCount, spaceIndentCount) + line;
@@ -2085,7 +2096,7 @@ void ASBeautifier::processPreprocessor(const string& preproc, const string& line
 	}
 	else if (defineCommentIndent && preproc == "define") {
 		size_t end_comment = line.find_last_of("*/");
-		size_t comment = line.find("/* Bit");
+		size_t comment = line.find("/*");
 		if (comment != 0 && comment!= string::npos && end_comment != string::npos) {
 			if (std::find(commentLocations->begin(), commentLocations->end(),comment) == commentLocations->end()) {
 				commentLocations->push_back(comment);
