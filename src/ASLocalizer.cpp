@@ -40,14 +40,14 @@
 #include "ASLocalizer.h"
 
 #ifdef _WIN32
-	#include <Windows.h>
+#include <Windows.h>
 #endif
 
 #ifdef __VMS
-	#define __USE_STD_IOSTREAM 1
-	#include <assert>
+#define __USE_STD_IOSTREAM 1
+#include <assert>
 #else
-	#include <cassert>
+#include <cassert>
 #endif
 
 #include <clocale>		// needed by some compilers
@@ -57,23 +57,24 @@
 #include <typeinfo>
 
 #ifdef _MSC_VER
-	#pragma warning(disable: 4996)  // secure version deprecation warnings
+#pragma warning(disable: 4996)  // secure version deprecation warnings
 #endif
 
 #ifdef __BORLANDC__
-	#pragma warn -8104	    // Local Static with constructor dangerous for multi-threaded apps
+#pragma warn -8104	    // Local Static with constructor dangerous for multi-threaded apps
 #endif
 
 #ifdef __INTEL_COMPILER
-	#pragma warning(disable:  383)  // value copied to temporary, reference to temporary used
-	#pragma warning(disable:  981)  // operands are evaluated in unspecified order
+#pragma warning(disable:  383)  // value copied to temporary, reference to temporary used
+#pragma warning(disable:  981)  // operands are evaluated in unspecified order
 #endif
 
 #ifdef __clang__
-	#pragma clang diagnostic ignored "-Wdeprecated-declarations"  // wcstombs
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"  // wcstombs
 #endif
 
-namespace astyle {
+namespace astyle
+{
 
 #ifndef ASTYLE_LIB
 
@@ -93,13 +94,14 @@ ASLocalizer::ASLocalizer()
 	m_translationClass = nullptr;
 
 	// Not all compilers support the C++ function locale::global(locale(""));
-	char* localeName = setlocale(LC_ALL, "");
-	if (localeName == nullptr)		// use the english (ascii) defaults
-	{
+	char *localeName = setlocale(LC_ALL, "");
+
+	if (localeName == nullptr) {	// use the english (ascii) defaults
 		fprintf(stderr, "\n%s\n\n", "Cannot set native locale, reverting to English");
 		setTranslationClass();
 		return;
 	}
+
 	// set the class variables
 #ifdef _WIN32
 	size_t lcid = GetUserDefaultLCID();
@@ -117,8 +119,7 @@ ASLocalizer::~ASLocalizer()
 
 #ifdef _WIN32
 
-struct WinLangCode
-{
+struct WinLangCode {
 	size_t winLang;
 	char canonicalLang[3];
 };
@@ -165,21 +166,23 @@ void ASLocalizer::setLanguageFromLCID(size_t lcid)
 	size_t sublang = SUBLANGID(LANGIDFROMLCID(m_lcid));
 	// find language in the wlc table
 	size_t count = sizeof(wlc) / sizeof(wlc[0]);
-	for (size_t i = 0; i < count; i++)
-	{
-		if (wlc[i].winLang == lang)
-		{
+
+	for (size_t i = 0; i < count; i++) {
+		if (wlc[i].winLang == lang) {
 			m_langID = wlc[i].canonicalLang;
 			break;
 		}
 	}
-	if (m_langID == "zh")
-	{
-		if (sublang == SUBLANG_CHINESE_SIMPLIFIED || sublang == SUBLANG_CHINESE_SINGAPORE)
+
+	if (m_langID == "zh") {
+		if (sublang == SUBLANG_CHINESE_SIMPLIFIED || sublang == SUBLANG_CHINESE_SINGAPORE) {
 			m_subLangID = "CHS";
-		else
-			m_subLangID = "CHT";	// default
+
+		} else {
+			m_subLangID = "CHT";        // default
+		}
 	}
+
 	setTranslationClass();
 }
 
@@ -191,14 +194,14 @@ string ASLocalizer::getLanguageID() const
 	return m_langID;
 }
 
-const Translation* ASLocalizer::getTranslationClass() const
+const Translation *ASLocalizer::getTranslationClass() const
 // Returns the name of the translation class in m_translation.  Used for testing.
 {
 	assert(m_translationClass);
 	return m_translationClass;
 }
 
-void ASLocalizer::setLanguageFromName(const char* langID)
+void ASLocalizer::setLanguageFromName(const char *langID)
 // Linux set the language to use from the langID.
 //
 // the language string has the following form
@@ -224,18 +227,21 @@ void ASLocalizer::setLanguageFromName(const char* langID)
 	m_langID = langStr.substr(0, 2);
 
 	// need the sublang for chinese
-	if (m_langID == "zh" && langStr[2] == '_')
-	{
+	if (m_langID == "zh" && langStr[2] == '_') {
 		string subLang = langStr.substr(3, 2);
-		if (subLang == "CN" || subLang == "SG")
+
+		if (subLang == "CN" || subLang == "SG") {
 			m_subLangID = "CHS";
-		else
-			m_subLangID = "CHT";	// default
+
+		} else {
+			m_subLangID = "CHT";        // default
+		}
 	}
+
 	setTranslationClass();
 }
 
-const char* ASLocalizer::settext(const char* textIn) const
+const char *ASLocalizer::settext(const char *textIn) const
 // Call the settext class and return the value.
 {
 	assert(m_translationClass);
@@ -249,60 +255,85 @@ void ASLocalizer::setTranslationClass()
 // Get the language ID at http://msdn.microsoft.com/en-us/library/ee797784%28v=cs.20%29.aspx
 {
 	assert(m_langID.length());
+
 	// delete previously set (--ascii option)
-	if (m_translationClass != nullptr)
-	{
+	if (m_translationClass != nullptr) {
 		delete m_translationClass;
 		m_translationClass = nullptr;
 	}
-	if (m_langID == "bg")
+
+	if (m_langID == "bg") {
 		m_translationClass = new Bulgarian;
-	else if (m_langID == "zh" && m_subLangID == "CHS")
+
+	} else if (m_langID == "zh" && m_subLangID == "CHS") {
 		m_translationClass = new ChineseSimplified;
-	else if (m_langID == "zh" && m_subLangID == "CHT")
+
+	} else if (m_langID == "zh" && m_subLangID == "CHT") {
 		m_translationClass = new ChineseTraditional;
-	else if (m_langID == "nl")
+
+	} else if (m_langID == "nl") {
 		m_translationClass = new Dutch;
-	else if (m_langID == "en")
+
+	} else if (m_langID == "en") {
 		m_translationClass = new English;
-	else if (m_langID == "et")
+
+	} else if (m_langID == "et") {
 		m_translationClass = new Estonian;
-	else if (m_langID == "fi")
+
+	} else if (m_langID == "fi") {
 		m_translationClass = new Finnish;
-	else if (m_langID == "fr")
+
+	} else if (m_langID == "fr") {
 		m_translationClass = new French;
-	else if (m_langID == "de")
+
+	} else if (m_langID == "de") {
 		m_translationClass = new German;
-	else if (m_langID == "el")
+
+	} else if (m_langID == "el") {
 		m_translationClass = new Greek;
-	else if (m_langID == "hi")
+
+	} else if (m_langID == "hi") {
 		m_translationClass = new Hindi;
-	else if (m_langID == "hu")
+
+	} else if (m_langID == "hu") {
 		m_translationClass = new Hungarian;
-	else if (m_langID == "it")
+
+	} else if (m_langID == "it") {
 		m_translationClass = new Italian;
-	else if (m_langID == "ja")
+
+	} else if (m_langID == "ja") {
 		m_translationClass = new Japanese;
-	else if (m_langID == "ko")
+
+	} else if (m_langID == "ko") {
 		m_translationClass = new Korean;
-	else if (m_langID == "nn")
+
+	} else if (m_langID == "nn") {
 		m_translationClass = new Norwegian;
-	else if (m_langID == "pl")
+
+	} else if (m_langID == "pl") {
 		m_translationClass = new Polish;
-	else if (m_langID == "pt")
+
+	} else if (m_langID == "pt") {
 		m_translationClass = new Portuguese;
-	else if (m_langID == "ro")
+
+	} else if (m_langID == "ro") {
 		m_translationClass = new Romanian;
-	else if (m_langID == "ru")
+
+	} else if (m_langID == "ru") {
 		m_translationClass = new Russian;
-	else if (m_langID == "es")
+
+	} else if (m_langID == "es") {
 		m_translationClass = new Spanish;
-	else if (m_langID == "sv")
+
+	} else if (m_langID == "sv") {
 		m_translationClass = new Swedish;
-	else if (m_langID == "uk")
+
+	} else if (m_langID == "uk") {
 		m_translationClass = new Ukrainian;
-	else	// default
+
+	} else {	// default
 		m_translationClass = new English;
+	}
 }
 
 //----------------------------------------------------------------------------
@@ -314,7 +345,7 @@ Translation::Translation()
 	m_translationVector.reserve(translationElements);
 }
 
-void Translation::addPair(const string& english, const wstring& translated)
+void Translation::addPair(const string &english, const wstring &translated)
 // Add a string pair to the translation vector.
 {
 	pair<string, wstring> entry(english, translated);
@@ -322,33 +353,35 @@ void Translation::addPair(const string& english, const wstring& translated)
 	assert(m_translationVector.size() <= translationElements);
 }
 
-string Translation::convertToMultiByte(const wstring& wideStr) const
+string Translation::convertToMultiByte(const wstring &wideStr) const
 // Convert wchar_t to a multibyte string using the currently assigned locale.
 // Return an empty string if an error occurs.
 {
 	static bool msgDisplayed = false;
 	// get length of the output excluding the nullptr and validate the parameters
 	size_t mbLen = wcstombs(nullptr, wideStr.c_str(), 0);
-	if (mbLen == string::npos)
-	{
-		if (!msgDisplayed)
-		{
+
+	if (mbLen == string::npos) {
+		if (!msgDisplayed) {
 			fprintf(stderr, "\n%s\n\n", "Cannot convert to multi-byte string, reverting to English");
 			msgDisplayed = true;
 		}
+
 		return "";
 	}
+
 	// convert the characters
-	char* mbStr = new (nothrow) char[mbLen + 1];
-	if (mbStr == nullptr)
-	{
-		if (!msgDisplayed)
-		{
+	char *mbStr = new (nothrow) char[mbLen + 1];
+
+	if (mbStr == nullptr) {
+		if (!msgDisplayed) {
 			fprintf(stderr, "\n%s\n\n", "Bad memory alloc for multi-byte string, reverting to English");
 			msgDisplayed = true;
 		}
+
 		return "";
 	}
+
 	wcstombs(mbStr, wideStr.c_str(), mbLen + 1);
 	// return the string
 	string mbTranslation = mbStr;
@@ -359,8 +392,10 @@ string Translation::convertToMultiByte(const wstring& wideStr) const
 string Translation::getTranslationString(size_t i) const
 // Return the translation ascii value. Used for testing.
 {
-	if (i >= m_translationVector.size())
+	if (i >= m_translationVector.size()) {
 		return string();
+	}
+
 	return m_translationVector[i].first;
 }
 
@@ -370,39 +405,40 @@ size_t Translation::getTranslationVectorSize() const
 	return m_translationVector.size();
 }
 
-bool Translation::getWideTranslation(const string& stringIn, wstring& wideOut) const
+bool Translation::getWideTranslation(const string &stringIn, wstring &wideOut) const
 // Get the wide translation string. Used for testing.
 {
-	for (size_t i = 0; i < m_translationVector.size(); i++)
-	{
-		if (m_translationVector.at(i).first == stringIn)
-		{
+	for (size_t i = 0; i < m_translationVector.size(); i++) {
+		if (m_translationVector.at(i).first == stringIn) {
 			wideOut = m_translationVector.at(i).second;
 			return true;
 		}
 	}
+
 	// not found
 	wideOut = L"";
 	return false;
 }
 
-string& Translation::translate(const string& stringIn) const
+string &Translation::translate(const string &stringIn) const
 // Translate a string.
 // Return a mutable string so the method can have a "const" designation.
 // This allows "settext" to be called from a "const" method.
 {
 	m_mbTranslation.clear();
-	for (size_t i = 0; i < m_translationVector.size(); i++)
-	{
-		if (m_translationVector.at(i).first == stringIn)
-		{
+
+	for (size_t i = 0; i < m_translationVector.size(); i++) {
+		if (m_translationVector.at(i).first == stringIn) {
 			m_mbTranslation = convertToMultiByte(m_translationVector.at(i).second);
 			break;
 		}
 	}
+
 	// not found, return english
-	if (m_mbTranslation.empty())
+	if (m_mbTranslation.empty()) {
 		m_mbTranslation = stringIn;
+	}
+
 	return m_mbTranslation;
 }
 
@@ -429,18 +465,23 @@ Bulgarian::Bulgarian()	// български
 	addPair("Invalid default options:", L"Невалидни опции по подразбиране:");
 	addPair("Invalid project options:", L"Невалидни опции за проекти:");
 	addPair("Invalid command line options:", L"Невалидни опции за командния ред:");
-	addPair("For help on options type 'astyle -h'", L"За помощ относно възможностите тип 'astyle -h'");
-	addPair("Cannot open default option file", L"Не може да се отвори файлът с опции по подразбиране");
-	addPair("Cannot open project option file", L"Не може да се отвори файла с опции за проекта");
+	addPair("For help on options type 'astyle -h'",
+		L"За помощ относно възможностите тип 'astyle -h'");
+	addPair("Cannot open default option file",
+		L"Не може да се отвори файлът с опции по подразбиране");
+	addPair("Cannot open project option file",
+		L"Не може да се отвори файла с опции за проекта");
 	addPair("Cannot open directory", L"Не може да се отвори директория");
 	addPair("Cannot open HTML file %s\n", L"Не може да се отвори HTML файл %s\n");
 	addPair("Command execute failure", L"Command изпълни недостатъчност");
 	addPair("Command is not installed", L"Command не е инсталиран");
 	addPair("Missing filename in %s\n", L"Липсва името на файла в %s\n");
 	addPair("Recursive option with no wildcard", L"Рекурсивно опция, без маска");
-	addPair("Did you intend quote the filename", L"Знаете ли намерение да цитирам името на файла");
+	addPair("Did you intend quote the filename",
+		L"Знаете ли намерение да цитирам името на файла");
 	addPair("No file to process %s\n", L"Не файл за обработка %s\n");
-	addPair("Did you intend to use --recursive", L"Знаете ли възнамерявате да използвате --recursive");
+	addPair("Did you intend to use --recursive",
+		L"Знаете ли възнамерявате да използвате --recursive");
 	addPair("Cannot process UTF-32 encoding", L"Не може да са UTF-32 кодиране");
 	addPair("Artistic Style has terminated\n", L"Artistic Style е прекратено\n");
 }
@@ -704,19 +745,25 @@ Greek::Greek()	// ελληνικά
 	addPair("Invalid default options:", L"Μη έγκυρες επιλογές προεπιλογής:");
 	addPair("Invalid project options:", L"Μη έγκυρες επιλογές έργου:");
 	addPair("Invalid command line options:", L"Μη έγκυρη επιλογές γραμμής εντολών:");
-	addPair("For help on options type 'astyle -h'", L"Για βοήθεια σχετικά με το είδος επιλογές 'astyle -h'");
-	addPair("Cannot open default option file", L"Δεν είναι δυνατό να ανοίξει το προεπιλεγμένο αρχείο επιλογών");
-	addPair("Cannot open project option file", L"Δεν είναι δυνατό να ανοίξει το αρχείο επιλογής έργου");
+	addPair("For help on options type 'astyle -h'",
+		L"Για βοήθεια σχετικά με το είδος επιλογές 'astyle -h'");
+	addPair("Cannot open default option file",
+		L"Δεν είναι δυνατό να ανοίξει το προεπιλεγμένο αρχείο επιλογών");
+	addPair("Cannot open project option file",
+		L"Δεν είναι δυνατό να ανοίξει το αρχείο επιλογής έργου");
 	addPair("Cannot open directory", L"Δεν μπορείτε να ανοίξετε τον κατάλογο");
 	addPair("Cannot open HTML file %s\n", L"Δεν μπορείτε να ανοίξετε το αρχείο HTML %s\n");
 	addPair("Command execute failure", L"Εντολή να εκτελέσει την αποτυχία");
 	addPair("Command is not installed", L"Η εντολή δεν έχει εγκατασταθεί");
 	addPair("Missing filename in %s\n", L"Λείπει το όνομα αρχείου σε %s\n");
 	addPair("Recursive option with no wildcard", L"Αναδρομικές επιλογή χωρίς μπαλαντέρ");
-	addPair("Did you intend quote the filename", L"Μήπως σκοπεύετε να αναφέρετε το όνομα του αρχείου");
+	addPair("Did you intend quote the filename",
+		L"Μήπως σκοπεύετε να αναφέρετε το όνομα του αρχείου");
 	addPair("No file to process %s\n", L"Δεν υπάρχει αρχείο για την επεξεργασία %s\n");
-	addPair("Did you intend to use --recursive", L"Μήπως σκοπεύετε να χρησιμοποιήσετε --recursive");
-	addPair("Cannot process UTF-32 encoding", L"δεν μπορεί να επεξεργαστεί UTF-32 κωδικοποίηση");
+	addPair("Did you intend to use --recursive",
+		L"Μήπως σκοπεύετε να χρησιμοποιήσετε --recursive");
+	addPair("Cannot process UTF-32 encoding",
+		L"δεν μπορεί να επεξεργαστεί UTF-32 κωδικοποίηση");
 	addPair("Artistic Style has terminated\n", L"Artistic Style έχει λήξει\n");
 }
 
@@ -732,7 +779,8 @@ Hindi::Hindi()	// हिन्दी
 	addPair("Project option file  %s\n", L"प्रोजेक्ट विकल्प फ़ाइल  %s\n");
 	addPair("Exclude  %s\n", L"निकालना  %s\n");
 	addPair("Exclude (unmatched)  %s\n", L"अपवर्जित (बेजोड़)  %s\n");
-	addPair(" %s formatted   %s unchanged   ", L" %s स्वरूपित किया   %s अपरिवर्तित   ");
+	addPair(" %s formatted   %s unchanged   ",
+		L" %s स्वरूपित किया   %s अपरिवर्तित   ");
 	addPair(" seconds   ", L" सेकंड   ");
 	addPair("%d min %d sec   ", L"%d मिनट %d सेकंड   ");
 	addPair("%s lines\n", L"%s लाइनों\n");
@@ -740,19 +788,26 @@ Hindi::Hindi()	// हिन्दी
 	addPair("Invalid default options:", L"अमान्य डिफ़ॉल्ट विकल्प:");
 	addPair("Invalid project options:", L"अमान्य प्रोजेक्ट विकल्प:");
 	addPair("Invalid command line options:", L"कमांड लाइन विकल्प अवैध:");
-	addPair("For help on options type 'astyle -h'", L"विकल्पों पर मदद के लिए प्रकार 'astyle -h'");
-	addPair("Cannot open default option file", L"डिफ़ॉल्ट विकल्प फ़ाइल नहीं खोल सकता");
-	addPair("Cannot open project option file", L"परियोजना विकल्प फ़ाइल नहीं खोल सकता");
+	addPair("For help on options type 'astyle -h'",
+		L"विकल्पों पर मदद के लिए प्रकार 'astyle -h'");
+	addPair("Cannot open default option file",
+		L"डिफ़ॉल्ट विकल्प फ़ाइल नहीं खोल सकता");
+	addPair("Cannot open project option file",
+		L"परियोजना विकल्प फ़ाइल नहीं खोल सकता");
 	addPair("Cannot open directory", L"निर्देशिका नहीं खोल सकता");
 	addPair("Cannot open HTML file %s\n", L"HTML फ़ाइल नहीं खोल सकता %s\n");
 	addPair("Command execute failure", L"आदेश विफलता निष्पादित");
 	addPair("Command is not installed", L"कमान स्थापित नहीं है");
 	addPair("Missing filename in %s\n", L"लापता में फ़ाइलनाम %s\n");
-	addPair("Recursive option with no wildcard", L"कोई वाइल्डकार्ड साथ पुनरावर्ती विकल्प");
-	addPair("Did you intend quote the filename", L"क्या आप बोली फ़ाइलनाम का इरादा");
+	addPair("Recursive option with no wildcard",
+		L"कोई वाइल्डकार्ड साथ पुनरावर्ती विकल्प");
+	addPair("Did you intend quote the filename",
+		L"क्या आप बोली फ़ाइलनाम का इरादा");
 	addPair("No file to process %s\n", L"कोई फ़ाइल %s प्रक्रिया के लिए\n");
-	addPair("Did you intend to use --recursive", L"क्या आप उपयोग करना चाहते हैं --recursive");
-	addPair("Cannot process UTF-32 encoding", L"UTF-32 कूटबन्धन प्रक्रिया नहीं कर सकते");
+	addPair("Did you intend to use --recursive",
+		L"क्या आप उपयोग करना चाहते हैं --recursive");
+	addPair("Cannot process UTF-32 encoding",
+		L"UTF-32 कूटबन्धन प्रक्रिया नहीं कर सकते");
 	addPair("Artistic Style has terminated\n", L"Artistic Style समाप्त किया है\n");
 }
 
@@ -842,9 +897,12 @@ Japanese::Japanese()	// 日本語
 	addPair("Invalid default options:", L"無効なデフォルトオプション:");
 	addPair("Invalid project options:", L"無効なプロジェクトオプション:");
 	addPair("Invalid command line options:", L"無効なコマンドラインオプション：");
-	addPair("For help on options type 'astyle -h'", L"コオプションの種類のヘルプについて'astyle- h'を入力してください");
-	addPair("Cannot open default option file", L"デフォルトのオプションファイルを開くことができません");
-	addPair("Cannot open project option file", L"プロジェクトオプションファイルを開くことができません");
+	addPair("For help on options type 'astyle -h'",
+		L"コオプションの種類のヘルプについて'astyle- h'を入力してください");
+	addPair("Cannot open default option file",
+		L"デフォルトのオプションファイルを開くことができません");
+	addPair("Cannot open project option file",
+		L"プロジェクトオプションファイルを開くことができません");
 	addPair("Cannot open directory", L"ディレクトリを開くことができません。");
 	addPair("Cannot open HTML file %s\n", L"HTMLファイルを開くことができません %s\n");
 	addPair("Command execute failure", L"コマンドが失敗を実行します");
@@ -876,7 +934,8 @@ Korean::Korean()	// 한국의
 	addPair("Invalid default options:", L"잘못된 기본 옵션:");
 	addPair("Invalid project options:", L"잘못된 프로젝트 옵션:");
 	addPair("Invalid command line options:", L"잘못된 명령줄 옵션 :");
-	addPair("For help on options type 'astyle -h'", L"도움말을 보려면 옵션 유형 'astyle - H'를 사용합니다");
+	addPair("For help on options type 'astyle -h'",
+		L"도움말을 보려면 옵션 유형 'astyle - H'를 사용합니다");
 	addPair("Cannot open default option file", L"기본 옵션 파일을 열 수 없습니다.");
 	addPair("Cannot open project option file", L"프로젝트 옵션 파일을 열 수 없습니다.");
 	addPair("Cannot open directory", L"디렉토리를 열지 못했습니다");
@@ -1045,19 +1104,24 @@ Russian::Russian()	// русский
 	addPair("Opening HTML documentation %s\n", L"Открытие HTML документации %s\n");
 	addPair("Invalid default options:", L"Недействительные параметры по умолчанию:");
 	addPair("Invalid project options:", L"Недопустимые параметры проекта:");
-	addPair("Invalid command line options:", L"Недопустимые параметры командной строки:");
-	addPair("For help on options type 'astyle -h'", L"Для получения справки по 'astyle -h' опций типа");
-	addPair("Cannot open default option file", L"Не удается открыть файл параметров по умолчанию");
+	addPair("Invalid command line options:",
+		L"Недопустимые параметры командной строки:");
+	addPair("For help on options type 'astyle -h'",
+		L"Для получения справки по 'astyle -h' опций типа");
+	addPair("Cannot open default option file",
+		L"Не удается открыть файл параметров по умолчанию");
 	addPair("Cannot open project option file", L"Не удается открыть файл опций проекта");
 	addPair("Cannot open directory", L"Не могу открыть каталог");
 	addPair("Cannot open HTML file %s\n", L"Не удается открыть файл HTML %s\n");
 	addPair("Command execute failure", L"Выполнить команду недостаточности");
 	addPair("Command is not installed", L"Не установлен Команда");
 	addPair("Missing filename in %s\n", L"Отсутствует имя файла в %s\n");
-	addPair("Recursive option with no wildcard", L"Рекурсивный вариант без каких-либо шаблона");
+	addPair("Recursive option with no wildcard",
+		L"Рекурсивный вариант без каких-либо шаблона");
 	addPair("Did you intend quote the filename", L"Вы намерены цитатой файла");
 	addPair("No file to process %s\n", L"Нет файлов для обработки %s\n");
-	addPair("Did you intend to use --recursive", L"Неужели вы собираетесь использовать --recursive");
+	addPair("Did you intend to use --recursive",
+		L"Неужели вы собираетесь использовать --recursive");
 	addPair("Cannot process UTF-32 encoding", L"Не удается обработать UTF-32 кодировке");
 	addPair("Artistic Style has terminated\n", L"Artistic Style прекратил\n");
 }
@@ -1147,19 +1211,25 @@ Ukrainian::Ukrainian()	// Український
 	addPair("Opening HTML documentation %s\n", L"Відкриття HTML документації %s\n");
 	addPair("Invalid default options:", L"Недійсні параметри за умовчанням:");
 	addPair("Invalid project options:", L"Недійсні параметри проекту:");
-	addPair("Invalid command line options:", L"Неприпустима параметри командного рядка:");
-	addPair("For help on options type 'astyle -h'", L"Для отримання довідки по 'astyle -h' опцій типу");
-	addPair("Cannot open default option file", L"Неможливо відкрити файл параметрів за замовчуванням");
-	addPair("Cannot open project option file", L"Неможливо відкрити файл параметрів проекту");
+	addPair("Invalid command line options:",
+		L"Неприпустима параметри командного рядка:");
+	addPair("For help on options type 'astyle -h'",
+		L"Для отримання довідки по 'astyle -h' опцій типу");
+	addPair("Cannot open default option file",
+		L"Неможливо відкрити файл параметрів за замовчуванням");
+	addPair("Cannot open project option file",
+		L"Неможливо відкрити файл параметрів проекту");
 	addPair("Cannot open directory", L"Не можу відкрити каталог");
 	addPair("Cannot open HTML file %s\n", L"Не вдається відкрити файл HTML %s\n");
 	addPair("Command execute failure", L"Виконати команду недостатності");
 	addPair("Command is not installed", L"Не встановлений Команда");
 	addPair("Missing filename in %s\n", L"Відсутня назва файлу в %s\n");
-	addPair("Recursive option with no wildcard", L"Рекурсивний варіант без будь-яких шаблону");
+	addPair("Recursive option with no wildcard",
+		L"Рекурсивний варіант без будь-яких шаблону");
 	addPair("Did you intend quote the filename", L"Ви маєте намір цитатою файлу");
 	addPair("No file to process %s\n", L"Немає файлів для обробки %s\n");
-	addPair("Did you intend to use --recursive", L"Невже ви збираєтеся використовувати --recursive");
+	addPair("Did you intend to use --recursive",
+		L"Невже ви збираєтеся використовувати --recursive");
 	addPair("Cannot process UTF-32 encoding", L"Не вдається обробити UTF-32 кодуванні");
 	addPair("Artistic Style has terminated\n", L"Artistic Style припинив\n");
 }

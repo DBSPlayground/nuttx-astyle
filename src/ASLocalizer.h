@@ -12,12 +12,13 @@
 
 // library builds do not need ASLocalizer
 #ifdef ASTYLE_JNI
-	#ifndef ASTYLE_LIB    // ASTYLE_LIB must be defined for ASTYLE_JNI
-		#define ASTYLE_LIB
-	#endif
+#ifndef ASTYLE_LIB    // ASTYLE_LIB must be defined for ASTYLE_JNI
+#define ASTYLE_LIB
+#endif
 #endif  //  ASTYLE_JNI
 
-namespace astyle {
+namespace astyle
+{
 
 using namespace std;
 
@@ -36,18 +37,18 @@ public:		// functions
 	ASLocalizer();
 	virtual ~ASLocalizer();
 	string getLanguageID() const;
-	const Translation* getTranslationClass() const;
+	const Translation *getTranslationClass() const;
 #ifdef _WIN32
 	void setLanguageFromLCID(size_t lcid);
 #endif
-	void setLanguageFromName(const char* langID);
-	const char* settext(const char* textIn) const;
+	void setLanguageFromName(const char *langID);
+	const char *settext(const char *textIn) const;
 
 private:	// functions
 	void setTranslationClass();
 
 private:	// variables
-	Translation* m_translationClass;// pointer to a polymorphic Translation class
+	Translation *m_translationClass;// pointer to a polymorphic Translation class
 	string m_langID;				// language identifier from the locale
 	string m_subLangID;				// sub language identifier, if needed
 	string m_localeName;			// name of the current locale (Linux only)
@@ -69,14 +70,14 @@ class Translation
 public:
 	Translation();
 	virtual ~Translation() = default;
-	string convertToMultiByte(const wstring& wideStr) const;
+	string convertToMultiByte(const wstring &wideStr) const;
 	string getTranslationString(size_t i) const;
 	size_t getTranslationVectorSize() const;
-	bool getWideTranslation(const string& stringIn, wstring& wideOut) const;
-	string& translate(const string& stringIn) const;
+	bool getWideTranslation(const string &stringIn, wstring &wideOut) const;
+	string &translate(const string &stringIn) const;
 
 protected:
-	void addPair(const string& english, const wstring& translated);
+	void addPair(const string &english, const wstring &translated);
 	// variables
 	vector<pair<string, wstring> > m_translationVector;
 

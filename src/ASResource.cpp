@@ -14,7 +14,8 @@
 // astyle namespace
 //-----------------------------------------------------------------------------
 
-namespace astyle {
+namespace astyle
+{
 //
 const string ASResource::_AS_EXCEPT = string("__except");
 const string ASResource::_AS_FINALLY = string("__finally");
@@ -162,7 +163,7 @@ const string ASResource::AS_SEMICOLON = string(";");
  *
  * @param a and b, the string pointers to be compared.
  */
-bool sortOnLength(const string* a, const string* b)
+bool sortOnLength(const string *a, const string *b)
 {
 	return (*a).length() > (*b).length();
 }
@@ -173,7 +174,7 @@ bool sortOnLength(const string* a, const string* b)
  *
  * @param a and b, the string pointers to be compared.
  */
-bool sortOnName(const string* a, const string* b)
+bool sortOnName(const string *a, const string *b)
 {
 	return *a < *b;
 }
@@ -184,7 +185,7 @@ bool sortOnName(const string* a, const string* b)
  *
  * @param assignmentOperators   a reference to the vector to be built.
  */
-void ASResource::buildAssignmentOperators(vector<const string*>* assignmentOperators)
+void ASResource::buildAssignmentOperators(vector<const string *> *assignmentOperators)
 {
 	const size_t elements = 15;
 	assignmentOperators->reserve(elements);
@@ -217,7 +218,7 @@ void ASResource::buildAssignmentOperators(vector<const string*>* assignmentOpera
  *
  * @param castOperators     a reference to the vector to be built.
  */
-void ASResource::buildCastOperators(vector<const string*>* castOperators)
+void ASResource::buildCastOperators(vector<const string *> *castOperators)
 {
 	const size_t elements = 5;
 	castOperators->reserve(elements);
@@ -237,7 +238,7 @@ void ASResource::buildCastOperators(vector<const string*>* castOperators)
  *
  * @param headers       a reference to the vector to be built.
  */
-void ASResource::buildHeaders(vector<const string*>* headers, int fileType, bool beautifier)
+void ASResource::buildHeaders(vector<const string *> *headers, int fileType, bool beautifier)
 {
 	const size_t elements = 25;
 	headers->reserve(elements);
@@ -257,20 +258,18 @@ void ASResource::buildHeaders(vector<const string*>* headers, int fileType, bool
 	headers->emplace_back(&AS_FOREACH);		// QT & C#
 	headers->emplace_back(&AS_FOREVER);		// Qt & Boost
 
-	if (fileType == C_TYPE)
-	{
+	if (fileType == C_TYPE) {
 		headers->emplace_back(&_AS_TRY);		// __try
 		headers->emplace_back(&_AS_FINALLY);	// __finally
 		headers->emplace_back(&_AS_EXCEPT);	// __except
 	}
-	if (fileType == JAVA_TYPE)
-	{
+
+	if (fileType == JAVA_TYPE) {
 		headers->emplace_back(&AS_FINALLY);
 		headers->emplace_back(&AS_SYNCHRONIZED);
 	}
 
-	if (fileType == SHARP_TYPE)
-	{
+	if (fileType == SHARP_TYPE) {
 		headers->emplace_back(&AS_FINALLY);
 		headers->emplace_back(&AS_LOCK);
 		headers->emplace_back(&AS_FIXED);
@@ -281,15 +280,12 @@ void ASResource::buildHeaders(vector<const string*>* headers, int fileType, bool
 		headers->emplace_back(&AS_USING);
 	}
 
-	if (beautifier)
-	{
-		if (fileType == C_TYPE)
-		{
+	if (beautifier) {
+		if (fileType == C_TYPE) {
 			headers->emplace_back(&AS_TEMPLATE);
 		}
 
-		if (fileType == JAVA_TYPE)
-		{
+		if (fileType == JAVA_TYPE) {
 			headers->emplace_back(&AS_STATIC);         // for static constructor
 		}
 	}
@@ -304,7 +300,7 @@ void ASResource::buildHeaders(vector<const string*>* headers, int fileType, bool
  *
  * @param indentableHeaders     a reference to the vector to be built.
  */
-void ASResource::buildIndentableHeaders(vector<const string*>* indentableHeaders)
+void ASResource::buildIndentableHeaders(vector<const string *> *indentableHeaders)
 {
 	indentableHeaders->emplace_back(&AS_RETURN);
 
@@ -317,15 +313,14 @@ void ASResource::buildIndentableHeaders(vector<const string*>* indentableHeaders
 *
 * @param indentableMacros       a reference to the vector to be built.
 */
-void ASResource::buildIndentableMacros(vector<const pair<const string, const string>* >* indentableMacros)
+void ASResource::buildIndentableMacros(vector<const pair<const string, const string>* > *indentableMacros)
 {
 	const size_t elements = 10;
 	indentableMacros->reserve(elements);
 
 	// the pairs must be retained in memory because of pair pointers
 	using macro_pair = pair<const string, const string>;
-	static const macro_pair macros[] =
-	{
+	static const macro_pair macros[] = {
 		// wxWidgets
 		macro_pair("BEGIN_EVENT_TABLE",   "END_EVENT_TABLE"),
 		macro_pair("wxBEGIN_EVENT_TABLE", "wxEND_EVENT_TABLE"),
@@ -337,8 +332,10 @@ void ASResource::buildIndentableMacros(vector<const pair<const string, const str
 	};
 
 	size_t entries = sizeof(macros) / sizeof(macros[0]);
-	for (size_t i = 0; i < entries; i++)
+
+	for (size_t i = 0; i < entries; i++) {
 		indentableMacros->emplace_back(&macros[i]);
+	}
 
 	assert(indentableMacros->size() < elements);
 }
@@ -349,7 +346,7 @@ void ASResource::buildIndentableMacros(vector<const pair<const string, const str
  *
  * @param nonAssignmentOperators       a reference to the vector to be built.
  */
-void ASResource::buildNonAssignmentOperators(vector<const string*>* nonAssignmentOperators)
+void ASResource::buildNonAssignmentOperators(vector<const string *> *nonAssignmentOperators)
 {
 	const size_t elements = 15;
 	nonAssignmentOperators->reserve(elements);
@@ -380,7 +377,7 @@ void ASResource::buildNonAssignmentOperators(vector<const string*>* nonAssignmen
  *
  * @param nonParenHeaders       a reference to the vector to be built.
  */
-void ASResource::buildNonParenHeaders(vector<const string*>* nonParenHeaders, int fileType, bool beautifier)
+void ASResource::buildNonParenHeaders(vector<const string *> *nonParenHeaders, int fileType, bool beautifier)
 {
 	const size_t elements = 20;
 	nonParenHeaders->reserve(elements);
@@ -394,18 +391,16 @@ void ASResource::buildNonParenHeaders(vector<const string*>* nonParenHeaders, in
 	nonParenHeaders->emplace_back(&AS_QFOREVER);	// QT
 	nonParenHeaders->emplace_back(&AS_FOREVER);	// Boost
 
-	if (fileType == C_TYPE)
-	{
+	if (fileType == C_TYPE) {
 		nonParenHeaders->emplace_back(&_AS_TRY);		// __try
 		nonParenHeaders->emplace_back(&_AS_FINALLY);	// __finally
 	}
-	if (fileType == JAVA_TYPE)
-	{
+
+	if (fileType == JAVA_TYPE) {
 		nonParenHeaders->emplace_back(&AS_FINALLY);
 	}
 
-	if (fileType == SHARP_TYPE)
-	{
+	if (fileType == SHARP_TYPE) {
 		nonParenHeaders->emplace_back(&AS_FINALLY);
 		nonParenHeaders->emplace_back(&AS_GET);
 		nonParenHeaders->emplace_back(&AS_SET);
@@ -413,14 +408,12 @@ void ASResource::buildNonParenHeaders(vector<const string*>* nonParenHeaders, in
 		nonParenHeaders->emplace_back(&AS_REMOVE);
 	}
 
-	if (beautifier)
-	{
-		if (fileType == C_TYPE)
-		{
+	if (beautifier) {
+		if (fileType == C_TYPE) {
 			nonParenHeaders->emplace_back(&AS_TEMPLATE);
 		}
-		if (fileType == JAVA_TYPE)
-		{
+
+		if (fileType == JAVA_TYPE) {
 			nonParenHeaders->emplace_back(&AS_STATIC);
 		}
 	}
@@ -435,7 +428,7 @@ void ASResource::buildNonParenHeaders(vector<const string*>* nonParenHeaders, in
  *
  * @param operators             a reference to the vector to be built.
  */
-void ASResource::buildOperators(vector<const string*>* operators, int fileType)
+void ASResource::buildOperators(vector<const string *> *operators, int fileType)
 {
 	const size_t elements = 50;
 	operators->reserve(elements);
@@ -483,8 +476,8 @@ void ASResource::buildOperators(vector<const string*>* operators, int fileType)
 	operators->emplace_back(&AS_BIT_AND);
 	operators->emplace_back(&AS_BIT_NOT);
 	operators->emplace_back(&AS_BIT_XOR);
-	if (fileType == C_TYPE)
-	{
+
+	if (fileType == C_TYPE) {
 		operators->emplace_back(&AS_GCC_MIN_ASSIGN);
 		operators->emplace_back(&AS_GCC_MAX_ASSIGN);
 	}
@@ -500,27 +493,27 @@ void ASResource::buildOperators(vector<const string*>* operators, int fileType)
  *
  * @param preBlockStatements        a reference to the vector to be built.
  */
-void ASResource::buildPreBlockStatements(vector<const string*>* preBlockStatements, int fileType)
+void ASResource::buildPreBlockStatements(vector<const string *> *preBlockStatements, int fileType)
 {
 	const size_t elements = 10;
 	preBlockStatements->reserve(elements);
 
 	preBlockStatements->emplace_back(&AS_CLASS);
-	if (fileType == C_TYPE)
-	{
+
+	if (fileType == C_TYPE) {
 		preBlockStatements->emplace_back(&AS_STRUCT);
 		preBlockStatements->emplace_back(&AS_UNION);
 		preBlockStatements->emplace_back(&AS_NAMESPACE);
 		preBlockStatements->emplace_back(&AS_MODULE);     // for CORBA IDL
 		preBlockStatements->emplace_back(&AS_INTERFACE);  // for CORBA IDL
 	}
-	if (fileType == JAVA_TYPE)
-	{
+
+	if (fileType == JAVA_TYPE) {
 		preBlockStatements->emplace_back(&AS_INTERFACE);
 		preBlockStatements->emplace_back(&AS_THROWS);
 	}
-	if (fileType == SHARP_TYPE)
-	{
+
+	if (fileType == SHARP_TYPE) {
 		preBlockStatements->emplace_back(&AS_INTERFACE);
 		preBlockStatements->emplace_back(&AS_NAMESPACE);
 		preBlockStatements->emplace_back(&AS_WHERE);
@@ -540,13 +533,12 @@ void ASResource::buildPreBlockStatements(vector<const string*>* preBlockStatemen
  * the closing paren and the opening brace.
  * e.g. in "void foo() const {}", "const" is a preCommandHeader.
  */
-void ASResource::buildPreCommandHeaders(vector<const string*>* preCommandHeaders, int fileType)
+void ASResource::buildPreCommandHeaders(vector<const string *> *preCommandHeaders, int fileType)
 {
 	const size_t elements = 10;
 	preCommandHeaders->reserve(elements);
 
-	if (fileType == C_TYPE)
-	{
+	if (fileType == C_TYPE) {
 		preCommandHeaders->emplace_back(&AS_CONST);
 		preCommandHeaders->emplace_back(&AS_FINAL);
 		preCommandHeaders->emplace_back(&AS_INTERRUPT);
@@ -557,13 +549,11 @@ void ASResource::buildPreCommandHeaders(vector<const string*>* preCommandHeaders
 		preCommandHeaders->emplace_back(&AS_AUTORELEASEPOOL);	// Obj-C only
 	}
 
-	if (fileType == JAVA_TYPE)
-	{
+	if (fileType == JAVA_TYPE) {
 		preCommandHeaders->emplace_back(&AS_THROWS);
 	}
 
-	if (fileType == SHARP_TYPE)
-	{
+	if (fileType == SHARP_TYPE) {
 		preCommandHeaders->emplace_back(&AS_WHERE);
 	}
 
@@ -579,26 +569,26 @@ void ASResource::buildPreCommandHeaders(vector<const string*>* preCommandHeaders
  *
  * @param preDefinitionHeaders      a reference to the vector to be built.
  */
-void ASResource::buildPreDefinitionHeaders(vector<const string*>* preDefinitionHeaders, int fileType)
+void ASResource::buildPreDefinitionHeaders(vector<const string *> *preDefinitionHeaders, int fileType)
 {
 	const size_t elements = 10;
 	preDefinitionHeaders->reserve(elements);
 
 	preDefinitionHeaders->emplace_back(&AS_CLASS);
-	if (fileType == C_TYPE)
-	{
+
+	if (fileType == C_TYPE) {
 		preDefinitionHeaders->emplace_back(&AS_STRUCT);
 		preDefinitionHeaders->emplace_back(&AS_UNION);
 		preDefinitionHeaders->emplace_back(&AS_NAMESPACE);
 		preDefinitionHeaders->emplace_back(&AS_MODULE);     // for CORBA IDL
 		preDefinitionHeaders->emplace_back(&AS_INTERFACE);  // for CORBA IDL
 	}
-	if (fileType == JAVA_TYPE)
-	{
+
+	if (fileType == JAVA_TYPE) {
 		preDefinitionHeaders->emplace_back(&AS_INTERFACE);
 	}
-	if (fileType == SHARP_TYPE)
-	{
+
+	if (fileType == SHARP_TYPE) {
 		preDefinitionHeaders->emplace_back(&AS_STRUCT);
 		preDefinitionHeaders->emplace_back(&AS_INTERFACE);
 		preDefinitionHeaders->emplace_back(&AS_NAMESPACE);
@@ -613,127 +603,175 @@ void ASResource::buildPreDefinitionHeaders(vector<const string*>* preDefinitionH
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // check if a specific line position contains a header.
-const string* ASBase::findHeader(const string& line, int i,
-                                 const vector<const string*>* possibleHeaders) const
+const string *ASBase::findHeader(const string &line, int i,
+				 const vector<const string *> *possibleHeaders) const
 {
 	assert(isCharPotentialHeader(line, i));
 	// check the word
 	size_t maxHeaders = possibleHeaders->size();
-	for (size_t p = 0; p < maxHeaders; p++)
-	{
-		const string* header = (*possibleHeaders)[p];
+
+	for (size_t p = 0; p < maxHeaders; p++) {
+		const string *header = (*possibleHeaders)[p];
 		const size_t wordEnd = i + header->length();
-		if (wordEnd > line.length())
+
+		if (wordEnd > line.length()) {
 			continue;
+		}
+
 		int result = (line.compare(i, header->length(), *header));
-		if (result > 0)
+
+		if (result > 0) {
 			continue;
-		if (result < 0)
+		}
+
+		if (result < 0) {
 			break;
+		}
+
 		// check that this is not part of a longer word
-		if (wordEnd == line.length())
+		if (wordEnd == line.length()) {
 			return header;
-		if (isLegalNameChar(line[wordEnd]))
+		}
+
+		if (isLegalNameChar(line[wordEnd])) {
 			continue;
+		}
+
 		const char peekChar = peekNextChar(line, wordEnd - 1);
+
 		// is not a header if part of a definition
-		if (peekChar == ',' || peekChar == ')')
+		if (peekChar == ',' || peekChar == ')') {
 			break;
+		}
+
 		// the following accessor definitions are NOT headers
 		// goto default; is NOT a header
 		// default(int) keyword in C# is NOT a header
 		if ((header == &AS_GET
-		        || header == &AS_SET
-		        || header == &AS_DEFAULT)
-		        && (peekChar == ';' || peekChar == '(' || peekChar == '='))
+		     || header == &AS_SET
+		     || header == &AS_DEFAULT)
+		    && (peekChar == ';' || peekChar == '(' || peekChar == '=')) {
 			break;
+		}
+
 		return header;
 	}
+
 	return nullptr;
 }
 
 // check if a specific line position contains a keyword.
-bool ASBase::findKeyword(const string& line, int i, const string& keyword) const
+bool ASBase::findKeyword(const string &line, int i, const string &keyword) const
 {
 	assert(isCharPotentialHeader(line, i));
 	// check the word
 	const size_t keywordLength = keyword.length();
 	const size_t wordEnd = i + keywordLength;
-	if (wordEnd > line.length())
+
+	if (wordEnd > line.length()) {
 		return false;
-	if (line.compare(i, keywordLength, keyword) != 0)
+	}
+
+	if (line.compare(i, keywordLength, keyword) != 0) {
 		return false;
+	}
+
 	// check that this is not part of a longer word
-	if (wordEnd == line.length())
+	if (wordEnd == line.length()) {
 		return true;
-	if (isLegalNameChar(line[wordEnd]))
+	}
+
+	if (isLegalNameChar(line[wordEnd])) {
 		return false;
+	}
+
 	// is not a keyword if part of a definition
 	const char peekChar = peekNextChar(line, (int) wordEnd - 1);
-	if (peekChar == ',' || peekChar == ')')
+
+	if (peekChar == ',' || peekChar == ')') {
 		return false;
+	}
+
 	return true;
 }
 
 // check if a specific line position contains an operator.
-const string* ASBase::findOperator(const string& line, int i,
-                                   const vector<const string*>* possibleOperators) const
+const string *ASBase::findOperator(const string &line, int i,
+				   const vector<const string *> *possibleOperators) const
 {
 	assert(isCharPotentialOperator(line[i]));
 	// find the operator in the vector
 	// the vector contains the LONGEST operators first
 	// must loop thru the entire vector
 	size_t maxOperators = possibleOperators->size();
-	for (size_t p = 0; p < maxOperators; p++)
-	{
+
+	for (size_t p = 0; p < maxOperators; p++) {
 		const size_t wordEnd = i + (*(*possibleOperators)[p]).length();
-		if (wordEnd > line.length())
+
+		if (wordEnd > line.length()) {
 			continue;
-		if (line.compare(i, (*(*possibleOperators)[p]).length(), *(*possibleOperators)[p]) == 0)
+		}
+
+		if (line.compare(i, (*(*possibleOperators)[p]).length(), *(*possibleOperators)[p]) == 0) {
 			return (*possibleOperators)[p];
+		}
 	}
+
 	return nullptr;
 }
 
 // get the current word on a line
 // index must point to the beginning of the word
-string ASBase::getCurrentWord(const string& line, size_t index) const
+string ASBase::getCurrentWord(const string &line, size_t index) const
 {
 	assert(isCharPotentialHeader(line, index));
 	size_t lineLength = line.length();
 	size_t i;
-	for (i = index; i < lineLength; i++)
-	{
-		if (!isLegalNameChar(line[i]))
+
+	for (i = index; i < lineLength; i++) {
+		if (!isLegalNameChar(line[i])) {
 			break;
+		}
 	}
+
 	return line.substr(index, i - index);
 }
 
 // check if a specific character can be used in a legal variable/method/class name
 bool ASBase::isLegalNameChar(char ch) const
 {
-	if (isWhiteSpace(ch))
+	if (isWhiteSpace(ch)) {
 		return false;
-	if ((unsigned char) ch > 127)
+	}
+
+	if ((unsigned char) ch > 127) {
 		return false;
+	}
+
 	return (isalnum((unsigned char) ch)
-	        || ch == '.' || ch == '_'
-	        || (isJavaStyle() && ch == '$')
-	        || (isSharpStyle() && ch == '@'));  // may be used as a prefix
+		|| ch == '.' || ch == '_'
+		|| (isJavaStyle() && ch == '$')
+		|| (isSharpStyle() && ch == '@'));  // may be used as a prefix
 }
 
 // check if a specific character can be part of a header
-bool ASBase::isCharPotentialHeader(const string& line, size_t i) const
+bool ASBase::isCharPotentialHeader(const string &line, size_t i) const
 {
 	assert(!isWhiteSpace(line[i]));
 	char prevCh = ' ';
-	if (i > 0)
+
+	if (i > 0) {
 		prevCh = line[i - 1];
-	if (i > 1 && line[i - 2] == '\\')
+	}
+
+	if (i > 1 && line[i - 2] == '\\') {
 		prevCh = ' ';
-	if (!isLegalNameChar(prevCh) && isLegalNameChar(line[i]))
+	}
+
+	if (!isLegalNameChar(prevCh) && isLegalNameChar(line[i])) {
 		return true;
+	}
+
 	return false;
 }
 
@@ -741,15 +779,18 @@ bool ASBase::isCharPotentialHeader(const string& line, size_t i) const
 bool ASBase::isCharPotentialOperator(char ch) const
 {
 	assert(!isWhiteSpace(ch));
-	if ((unsigned) ch > 127)
+
+	if ((unsigned) ch > 127) {
 		return false;
+	}
+
 	return (ispunct((unsigned char) ch)
-	        && ch != '{' && ch != '}'
-	        && ch != '(' && ch != ')'
-	        && ch != '[' && ch != ']'
-	        && ch != ';' && ch != ','
-	        && ch != '#' && ch != '\\'
-	        && ch != '\'' && ch != '\"');
+		&& ch != '{' && ch != '}'
+		&& ch != '(' && ch != ')'
+		&& ch != '[' && ch != ']'
+		&& ch != ';' && ch != ','
+		&& ch != '#' && ch != '\\'
+		&& ch != '\'' && ch != '\"');
 }
 
 // check if a specific character is a digit
@@ -760,25 +801,28 @@ bool ASBase::isDigit(char ch) const
 }
 
 // check if a specific character is a digit separator
-bool ASBase::isDigitSeparator(const string& line, int i) const
+bool ASBase::isDigitSeparator(const string &line, int i) const
 {
 	assert(line[i] == '\'');
 	// casting to (unsigned char) eliminates negative characters
 	// will get a "Debug Assertion Failed" if not cast
 	bool foundDigitSeparator = i > 0
-	                           && isxdigit((unsigned char) line[i - 1])
-	                           && i < (int) line.length() - 1
-	                           && isxdigit((unsigned char) line[i + 1]);
+				   && isxdigit((unsigned char) line[i - 1])
+				   && i < (int) line.length() - 1
+				   && isxdigit((unsigned char) line[i + 1]);
 	return foundDigitSeparator;
 }
 
 // peek at the next unread character.
-char ASBase::peekNextChar(const string& line, int i) const
+char ASBase::peekNextChar(const string &line, int i) const
 {
 	char ch = ' ';
 	size_t peekNum = line.find_first_not_of(" \t", i + 1);
-	if (peekNum == string::npos)
+
+	if (peekNum == string::npos) {
 		return ch;
+	}
+
 	ch = line[peekNum];
 	return ch;
 }

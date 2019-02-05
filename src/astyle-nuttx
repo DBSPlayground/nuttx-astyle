@@ -1,20 +1,20 @@
-style=gnu
-indent=spaces=2
-indent-switches
-indent-cases
-convert-tabs
+style = gnu
+	indent = spaces = 2
+			  indent - switches
+			  indent - cases
+			  convert - tabs
 # indent-preproc-block
 # indent-preproc-define
 # indent-after-parens
 # indent-continuation=1
-min-conditional-indent=0
-max-continuation-indent=60
-pad-oper
-pad-header
-align-pointer=name
-add-braces
-max-code-length=132
-formatted
+			  min - conditional - indent = 0
+					  max - continuation - indent = 60
+							  pad - oper
+							  pad - header
+							  align - pointer = name
+									  add - braces
+									  max - code - length = 132
+											  formatted
 # break-blocks
 # --delete-empty-lines
 #	Delete empty lines within a function or method. Empty lines outside
