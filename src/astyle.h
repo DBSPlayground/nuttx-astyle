@@ -185,6 +185,7 @@ public:
 	virtual int getStreamLength() const = 0;
 	virtual bool hasMoreLines() const = 0;
 	virtual string nextLine(bool emptyLineWasDeleted) = 0;
+	virtual string currentLine() = 0;
 	virtual string peekNextLine() = 0;
 	virtual void peekReset() = 0;
 	virtual streamoff tellg() = 0;
@@ -212,6 +213,9 @@ public:
 
 	bool hasMoreLines() const
 	{ return sourceIterator->hasMoreLines(); }
+
+	string currentLine() const
+	{ return sourceIterator->currentLine(); }
 
 	string peekNextLine()
 	{ needReset = true; return sourceIterator->peekNextLine(); }
@@ -321,16 +325,102 @@ protected:  // functions definitions are at the end of ASResource.cpp
 //-----------------------------------------------------------------------------
 // Class ASBeautifier
 //-----------------------------------------------------------------------------
-class ASDefine
+class ASTokens
 {
 public:
-	ASDefine();
-	ASDefine(const string &line, int lineNumber);
+	ASTokens();
+	ASTokens(const string &line, int lineNumber = 0);
 	pair<size_t, string>  defineCol;
 	pair<size_t, string>  symbolCol;
 	pair<size_t, string>  valueCol;
 	pair<size_t, string>  comentCol;
 	int lineNumber;
+};
+
+class ASComment
+{
+public:
+	ASComment()
+		: lineNumber(0)
+	{
+		comentCol.first = 0;
+	}
+	ASComment(const ASComment &o)
+		: lineNumber(o.lineNumber)
+	{
+		comentCol = o.comentCol;
+	}
+
+	ASComment(size_t pos, const string &line, int lineNumber)
+		: lineNumber(lineNumber)
+	{
+		comentCol.first = pos;
+		comentCol.second = line;
+	}
+	pair<size_t, string>  comentCol;
+	int lineNumber;
+};
+
+class ASMatch
+{
+public:
+	ASMatch() {}
+	ASMatch(size_t relevence, size_t pos, size_t lineNumber, string &line) :
+		hits(0),
+		relevence(relevence),
+		pos(pos),
+		lineNumber(lineNumber),
+		line(line)
+	{}
+
+	ASMatch(const ASMatch &other)
+	{
+		relevence = other.relevence;
+		hits = other.hits;
+		pos = other.pos;
+		lineNumber = other.lineNumber;
+		line = other.line;
+	}
+	~ASMatch() {}
+
+	size_t hits {0};
+	size_t relevence {0};
+	size_t pos {string::npos};
+	size_t lineNumber {0};
+	string line {" "};
+
+	bool operator<(const ASMatch &o) const
+	{
+		return relevence < o.relevence;
+	}
+	bool operator>(const ASMatch &o) const
+	{
+		return relevence > o.relevence;
+	}
+
+	bool operator==(const ASMatch &o) const
+	{
+		return pos != string::npos &&  pos == o.pos;
+	}
+
+	ASMatch closest(ASMatch &a, ASMatch &b, size_t lineNumber)
+	{
+		if (a.lineNumber != 0 && b.lineNumber != 0) {
+			ASMatch lower = a.lineNumber < b.lineNumber ? a : b;
+			ASMatch upper = a.lineNumber > b.lineNumber ? a : b;
+
+			if (abs((int)(lower.lineNumber - lineNumber)) == abs((int)(upper.lineNumber - lineNumber))) {
+				return max(lower, upper);
+
+			} else if (abs((int)(lower.lineNumber - lineNumber)) > abs((int)(upper.lineNumber - lineNumber))) {
+				return upper;
+			}
+
+			return lower;
+		}
+
+		return (a.lineNumber != 0) ? a : b;
+	}
 };
 
 
@@ -389,7 +479,7 @@ public:
 	bool getNamespaceIndent() const;
 	bool getPreprocDefineIndent() const;
 	bool getSwitchIndent() const;
-
+	enum {nln, bln, nlb, blb} sequence;
 protected:
 	void deleteBeautifierVectors();
 	int  getNextProgramCharDistance(const string &line, int i) const;
@@ -403,7 +493,8 @@ protected:
 	string trim(const string &str) const;
 	string rtrim(const string &str) const;
 	string ltrim(const string &str) const;
-	string LCSubStr(string X, string Y);
+	string LCSubStr(const string X, const string Y) const;
+
 	// variables set by ASFormatter - must be updated in activeBeautifierStack
 	int  inLineNumber;
 	int  runInIndentContinuation;
@@ -420,8 +511,9 @@ protected:
 	bool isInIndentableStruct;
 	bool isInIndentablePreproc;
 	int  currentLineNumber;
-	size_t  maxSpacePadNum;
-
+	static bool inProcessStruct;
+	static size_t  maxSpacePadNum;
+	static string lastlines[3];
 
 private:  // functions
 	void adjustObjCMethodDefinitionIndentation(const string &line_);
@@ -452,6 +544,11 @@ private:  // functions
 	bool isPreprocessorConditionalCplusplus(const string &line) const;
 	bool isInPreprocessorUnterminatedComment(const string &line);
 	bool isTopLevel() const;
+	pair<int, int> getSearchRange();
+	int fixupDefineComments(string &line, size_t currentLineNumber);
+	ASMatch lookAhead(const string &line, int maxLines = 10) const;
+	ASMatch lookBack(const string &line, int maxLines = 10) const;
+	ASMatch lookBack(const ASTokens &comment, int maxLines = 10) const;
 	bool statementEndsWithComma(const string &line, int index) const;
 	const string &getIndentedLineReturn(const string &newLine, const string &originalLine) const;
 	string getIndentedSpaceEquivalent(const string &line_) const;
@@ -478,8 +575,8 @@ private:  // variables
 	vector<const string *> *headerStack;
 	vector<vector<const string *>* > *tempStacks;
 	vector<int> *parenDepthStack;
-	vector<pair<int, string> > *commentLocations;
-	vector<ASDefine> *lastDefine;
+	vector<ASComment> *commentLocations;
+	vector<ASTokens> *lastDefine;
 	vector<bool> *blockStatementStack;
 	vector<bool> *parenStatementStack;
 	vector<bool> *braceBlockStateStack;
@@ -497,7 +594,6 @@ private:  // variables
 	string verbatimDelimiter;
 	bool isInQuote;
 	size_t indentedCommentPos;
-	size_t defaultDefineCommentPos;
 	bool isInVerbatimQuote;
 	bool haveLineContinuationChar;
 	bool isInAsm;

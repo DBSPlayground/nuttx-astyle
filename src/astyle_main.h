@@ -133,6 +133,7 @@ public:	// function declarations
 	bool getLineEndChange(int lineEndFormat) const;
 	int  getStreamLength() const override;
 	string nextLine(bool emptyLineWasDeleted) override;
+	string currentLine() {return buffer;}
 	string peekNextLine() override;
 	void peekReset() override;
 	void saveLastInputLine();
