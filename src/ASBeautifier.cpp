@@ -12,7 +12,7 @@
 #include <algorithm>
 #include <iterator>
 #include <signal.h>
-int brk = 175;
+int brk = 63;
 
 //-----------------------------------------------------------------------------
 // astyle namespace
@@ -82,6 +82,50 @@ ASTokens::ASTokens(const string &line, int lineNumber) :
 	}
 }
 
+ASMatch::ASMatch(const ASComment &other)
+{
+	relevence = 1;
+	hits = 1;
+	pos = other.comentCol.first;
+	lineNumber = other.lineNumber;
+	line = other.comentCol.second;
+}
+
+
+ASComment::ASCommentBoundsT ASBeautifier::findNearest(const ASComment &comment,
+		const std::vector<ASComment> &cont) const
+{
+
+	ASComment::ASCommentBoundsT rv;
+	auto et = cont.end();
+	et -= 2;
+	auto const it = std::lower_bound(cont.begin(), et, comment);
+
+	if (it != cont.end()) { rv.first =  *it; }
+
+	int maxLines = 1;
+
+	ASPeekStream sit(sourceIterator);
+	size_t  lineNumber = currentLineNumber;
+	string nextLine = sit.currentLine();
+
+	while (maxLines && sit.hasMoreLines()) {
+		ASTokens nextComment(nextLine, currentLineNumber);
+
+		if (nextComment.comentCol.first) {
+			maxLines--;
+			rv.second = ASComment(nextComment);
+		}
+
+		lineNumber++;
+		nextLine = sit.peekNextLine();
+	}
+
+	return rv;
+}
+
+
+
 bool ASBeautifier::inProcessStruct;
 size_t  ASBeautifier::maxSpacePadNum;
 string ASBeautifier::lastlines[3];
@@ -119,7 +163,7 @@ pair<int, int> ASBeautifier::getSearchRange()
 
 int ASBeautifier::fixupDefineComments(string &line, size_t currentLineNumber)
 {
-	ASTokens define(line);
+	ASTokens define(line, currentLineNumber);
 
 	size_t desired = 0;
 
@@ -129,17 +173,31 @@ int ASBeautifier::fixupDefineComments(string &line, size_t currentLineNumber)
 
 	ASMatch  selected;
 
-	if (define.defineCol.second == "#define") {
+	if (define.defineCol.second != "#define") {
+		desired = define.defineCol.second.length() + 1;
+
+	} else {
+#if 0
 		pair<int, int> ranges = getSearchRange();
 		ASMatch fwd = lookAhead(define.comentCol.second, ranges.first);
-
 		ASMatch rev = lookBack(define, ranges.second);
 		ASMatch revc = lookBack(define.comentCol.second, ranges.second);
 		selected = fwd.closest(revc, rev, currentLineNumber);
 		selected = fwd.closest(selected, fwd, currentLineNumber);
+#endif
+		const ASComment current(define);
+		ASComment::ASCommentBoundsT bouds = findNearest(current, *commentLocations);
 
-	} else  {
-		desired = define.defineCol.second.length() + 1;
+		if (bouds.first.pos == define.comentCol.first) {
+			selected = bouds.first;
+
+		} else if (bouds.second.pos == define.comentCol.first) {
+
+			selected = bouds.second;
+
+		} else {
+			selected = bestMatch(define, bouds.first, bouds.second);
+		}
 	}
 
 	desired  = selected.pos;
@@ -256,6 +314,30 @@ ASMatch ASBeautifier::lookAhead(const string &line, int maxLines) const
 	}
 
 	return ASMatch();
+}
+
+ASMatch ASBeautifier::bestMatch(const ASTokens &subject, ASMatch &prev, ASMatch &foll) const
+{
+
+	string lc = LCSubStr(prev.line,  subject.comentCol.second);
+
+	if (lc.length()) {
+		prev.relevence = lc.length();
+		prev.hits = 1;
+	}
+
+	lc = LCSubStr(foll.line,  subject.comentCol.second);
+
+	if (lc.length()) {
+		foll.relevence = lc.length();
+		foll.hits = 1;
+	}
+
+	if (prev.relevence > foll.relevence) {
+		return prev;
+	}
+
+	return foll;
 }
 
 ASMatch ASBeautifier::lookBack(const ASTokens &comment, int maxLines) const
@@ -840,6 +922,7 @@ string ASBeautifier::beautify(const string &originalLine, const string &inputLin
 			}
 		}
 	}
+
 
 	// 4 cases
 	//   blank      0 1 0 1

@@ -966,7 +966,7 @@ while [ $# -ne 0 ] ;
 		echo_err "${Red}No such file: ($1)${Reset}" &&exit 1
 		elif [ "$FILE_ARGS" != "1" ] ; then
 		echo_err "Unknown or unexpected arg ($1)."
-		[ -f "$1" ] && \
+		[ -f "$1" ]&& \
 		echo_err "The list of files requires a preceding '--'."
 		fi
 		;;
@@ -1061,8 +1061,8 @@ if ! REPOROOT = "$(find_repo_root "$ {FILES[@]}")" ; then
 #
 # If there are no files to process there weren't any style errors!
 #
-			[ -z "${FILES[*]}" ] && \
-			echo_dbg  "${GRNGRN}\\tNo files to process." && \
+			[ -z "${FILES[*]}" ]&& \
+			echo_dbg  "${GRNGRN}\\tNo files to process."&& \
 			exit 0
 
 			[ -n "$REPOROOT" ] &&REPOROOT = "$REPOROOT" /

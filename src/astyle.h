@@ -335,31 +335,23 @@ public:
 	pair<size_t, string>  valueCol;
 	pair<size_t, string>  comentCol;
 	int lineNumber;
-};
 
-class ASComment
-{
-public:
-	ASComment()
-		: lineNumber(0)
+	bool operator<(const ASTokens &o) const
 	{
-		comentCol.first = 0;
+		return lineNumber < o.lineNumber;
 	}
-	ASComment(const ASComment &o)
-		: lineNumber(o.lineNumber)
+	bool operator>(const ASTokens &o) const
 	{
-		comentCol = o.comentCol;
+		return lineNumber > o.lineNumber;
 	}
 
-	ASComment(size_t pos, const string &line, int lineNumber)
-		: lineNumber(lineNumber)
+	bool operator==(const ASTokens &o) const
 	{
-		comentCol.first = pos;
-		comentCol.second = line;
+		return lineNumber == o.lineNumber;
 	}
-	pair<size_t, string>  comentCol;
-	int lineNumber;
 };
+
+class ASComment;
 
 class ASMatch
 {
@@ -372,6 +364,8 @@ public:
 		lineNumber(lineNumber),
 		line(line)
 	{}
+
+	ASMatch(const ASComment &other);
 
 	ASMatch(const ASMatch &other)
 	{
@@ -420,6 +414,55 @@ public:
 		}
 
 		return (a.lineNumber != 0) ? a : b;
+	}
+};
+
+
+
+class ASComment
+{
+public:
+	typedef pair<ASMatch, ASMatch> ASCommentBoundsT;
+
+	ASComment()
+		: lineNumber(0)
+	{
+		comentCol.first = 0;
+	}
+
+	ASComment(const ASTokens &t)
+		: lineNumber(t.lineNumber)
+	{
+		comentCol = t.comentCol;
+	}
+
+	ASComment(const ASComment &o)
+		: lineNumber(o.lineNumber)
+	{
+		comentCol = o.comentCol;
+	}
+
+	ASComment(size_t pos, const string &line, int lineNumber)
+		: lineNumber(lineNumber)
+	{
+		comentCol.first = pos;
+		comentCol.second = line;
+	}
+	pair<size_t, string>  comentCol;
+	int lineNumber;
+
+	bool operator<(const ASComment &o) const
+	{
+		return lineNumber < o.lineNumber;
+	}
+	bool operator>(const ASComment &o) const
+	{
+		return lineNumber > o.lineNumber;
+	}
+
+	bool operator==(const ASComment &o) const
+	{
+		return lineNumber == o.lineNumber;
 	}
 };
 
@@ -494,6 +537,8 @@ protected:
 	string rtrim(const string &str) const;
 	string ltrim(const string &str) const;
 	string LCSubStr(const string X, const string Y) const;
+	ASComment::ASCommentBoundsT findNearest(const ASComment &comment, const std::vector<ASComment> &cont) const;
+	ASMatch bestMatch(const ASTokens &subject, ASMatch &prev, ASMatch &foll) const;
 
 	// variables set by ASFormatter - must be updated in activeBeautifierStack
 	int  inLineNumber;
